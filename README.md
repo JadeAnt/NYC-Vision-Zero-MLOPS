@@ -9,6 +9,9 @@ judged on? (Note that the “service” does not have to be for general users; y
 propose a system for a science problem, for example.)
 -->
 
+Value Proposition: Vision Zero hopes to reduce the amount of general vehicular related incidents. With our proposed system we can create a dashboard using the various types of information present within our datasets to create a decision tree model, or models, to classify the risk of possible incidents on any given day. Classifications would be as follows, subject to change; Dangerous, Somewhat Dangerous, Average, Somewhat Safe, and Safe.The NYPD and NYCDOT would also be able to use this information to better predict potential incidents based on existing daily conditions. Leading to faster response times, safer roads.
+
+
 ### Contributors
 
 <!-- Table of contributors and their roles. 
@@ -20,10 +23,10 @@ link to their contributions in all repos here. -->
 | Name                            | Responsible for | Link to their commits in this repo |
 |---------------------------------|-----------------|------------------------------------|
 | All team members                |                 |                                    |
-| Jaden Antoine                   |                 |                                    |
-| Jason Widjaja                   |                 |                                    |
-| Neha                   |                 |                                    |
-| Parth |                 |                                    |
+| Jaden Antoine                   |  Model Training               |         [Link](https://github.com/JadeAnt/NYC-Vision-Zero-MLOPS/commits/main/?author=JadeAnt)                           |
+| Jason Widjaja                   |  Continuous Pipeline               |      [Link](https://github.com/JadeAnt/NYC-Vision-Zero-MLOPS/commits/main/?author=JasonW35214)                                 |
+| Neha Nainan                     |  Data Pipeline               |          [Link](https://github.com/JadeAnt/NYC-Vision-Zero-MLOPS/commits/main/?author=nehaann23)                             |
+| Parth Naik    |  Model Serving and Monitoring               |           [Link](https://github.com/JadeAnt/NYC-Vision-Zero-MLOPS/commits/main/?author=Parthnaik123)                            |
 
 
 
@@ -39,12 +42,15 @@ all the data. -->
 Name of data/model, conditions under which it was created (ideally with links/references), 
 conditions under which it may be used. -->
 
-|              | How it was created | Conditions of use |
-|--------------|--------------------|-------------------|
-| Data set 1   |                    |                   |
-| Data set 2   |                    |                   |
-| Base model 1 |                    |                   |
-| etc          |                    |                   |
+|              | How it was created | Conditions of use | Data Source Type |
+|--------------|--------------------|-------------------|-------------------|
+| Motor Vehicle Collisions - Crashes   |                    |                   |       Dataset/API            |
+| Citywide Traffic Statistics   |                    |                   |       Dataset            |
+| Vision Zero View Map |                    |                   |         Data Visualization          |
+| NYPD TrafficStat Map |                    |                   |         Data Visualization          |
+| NYCOpenData |                    |                   |        Dataset Catalog           |
+| OpenWeatherMap |                    |                   |        Dataset/API         |
+| BERT |                    |                   |         Foundation Model          |
 
 
 ### Summary of infrastructure requirements
@@ -58,6 +64,7 @@ The table below shows an example, it is not a recommendation. -->
 | `m1.medium` VMs | 3 for entire project duration                     | ...           |
 | `gpu_mi100`     | 4 hour block twice a week                         |               |
 | Floating IPs    | 1 for entire project duration, 1 for sporadic use |               |
+| `on-device`             |                                                   |               |
 | etc             |                                                   |               |
 
 ### Detailed design plan
@@ -71,17 +78,59 @@ diagram, (3) justification for your strategy, (4) relate back to lecture materia
 <!-- Make sure to clarify how you will satisfy the Unit 4 and Unit 5 requirements, 
 and which optional "difficulty" points you are attempting. -->
 
+(1) Strategy
+
+(2) Relevant Diagram Part
+
+(3) Justification
+
+(4) Lecture Material Reference
+
+(5) Difficulty Points (if any)
+- Large model (BERT)
+- Use Ray Tune
+
 #### Model serving and monitoring platforms
 
 <!-- Make sure to clarify how you will satisfy the Unit 6 and Unit 7 requirements, 
 and which optional "difficulty" points you are attempting. -->
+
+(1) Strategy
+
+(2) Relevant Diagram Part
+
+(3) Justification
+
+(4) Lecture Material Reference
+
+(5) Difficulty Points (if any)
+- Data drift (or degredation) dashboard
 
 #### Data pipeline
 
 <!-- Make sure to clarify how you will satisfy the Unit 8 requirements,  and which 
 optional "difficulty" points you are attempting. -->
 
+(1) Strategy
+
+(2) Relevant Diagram Part
+
+(3) Justification
+
+(4) Lecture Material Reference
+
+(5) Difficulty Points (if any)
+- Data dashboard
+
 #### Continuous X
 
 <!-- Make sure to clarify how you will satisfy the Unit 3 requirements,  and which 
 optional "difficulty" points you are attempting. -->
+
+(1) Strategy
+
+(2) Relevant Diagram Part
+
+(3) Justification
+
+(4) Lecture Material Reference
