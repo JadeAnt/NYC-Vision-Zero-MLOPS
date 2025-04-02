@@ -77,18 +77,45 @@ diagram, (3) justification for your strategy, (4) relate back to lecture materia
 
 <!-- Make sure to clarify how you will satisfy the Unit 4 and Unit 5 requirements, 
 and which optional "difficulty" points you are attempting. -->
-
 (1) Strategy
+- Begin with exploratory data analysis to analyze the data, clean it, and find the features we hypothesize will be the best to work with starting out, before moving on to testing feature selection based methods
+- Train, retrain, and test various different machine learning models in order to find which performs the best for our multi-classification based problem. 
+  - Some models we would test for example might be (SVM, Random Forest, Decision Tree, Regression (feature selection) etc…)
+  - If we do use multiple models, it will most likely be Regression for feature Selection + a classification model. In case of change in relevant features
+  - Compare the results of each of the models and choose one, or more, models for our final output
+- Track the experiments we perform with each of these models using the MLFlow platform
+  - Ran in a separate container with volume, with the dataset split into train, valid, test, and production sets
+  - Saving the details of each run such using checkpointing to record version, hyperparameters, loss/metrics, alert for errors, and monitor the health of our hardware and software
+- Schedule training jobs using a Ray cluster for our continuous pipeline
+  - Using a head node to schedule/manage jobs, data, and serve a dashboard with 2 worker nodes. 
+  - Will Use MinIO object store for persistent job storage and save model checkpoints here as well in case of error or interruption
+  - Create a separate Jupyter notebook container to submit jobs to cluster through
+  - Prometheus and Grafana will be used for metric collection and dashboard visualization
+
 
 (2) Relevant Diagram Part
 
 (3) Justification
+- For our project, our end user would hypothetically use this on an edge device. As such it is important for our final model, or models, to be able to be deployed on such a device at all
+- As we will be testing multiple models, optimizations, etc.. It is important that we keep track of all of these model and code versions. As such the need for MLFlow to track our changes and store our data is imperative to our project
+- Also, the usage of a Ray cluster to manage our jobs is crucial for our continuous pipeline to work properly
 
 (4) Lecture Material Reference
+- Referring back to Units 4 and 5 in our lectures, we will be utilizing training with backpropagation in order to allow our models to learn the appropriate internal representations to better classify our data
+- Furthermore, as it was previously stated in lecture, paying explicit attention to our model’s size, velocity, and budget is a MUST. As they need to be able to perform on an edge device with a relatively small model size, with decent velocity, and small budget
 
-(5) Difficulty Points (if any)
-- Large model (BERT)
-- Use Ray Tune
+(5) Difficulty Points
+- Training strategies for large models
+  - We plan on testing a BERT model for training in order to see the effectiveness of an LLM on a classification task such as this. 
+  - To facilitate the training of an LLM we plan on experimenting with the following training strategies and report measurements to evaluate their effectiveness. These strategies are:
+    - Quantization
+    - LORA
+    - Pruning
+- These strategies are what we chose as each focuses on reducing model size and increasing model inference speed, two factors that are extremely important in our planned deployment to an edge device
+  - Scheduling hyperparameter tuning jobs
+  - Ray Tune will be used to perform hyperparameter optimization
+  - This will allow for easier hyperparameter tuning to occur with intelligent scheduling and allowing for faster testing of various configurations. Saving resources on our cluster
+
 
 #### Model serving and monitoring platforms
 
