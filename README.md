@@ -139,15 +139,45 @@ and which optional "difficulty" points you are attempting. -->
 optional "difficulty" points you are attempting. -->
 
 (1) Strategy
-
+- Persistent Storage:  
+  Provision persistent block storage on Chameleon to store all critical artifacts, including historical datasets and streaming data.
+- Offline Data Pipeline:  
+  - Data Sources:  
+    - OpenWeatherMap (weather data)  
+    - NYC Motor Vehicle Collisions Vehicles  
+    - Citywide Traffic Statistics  
+  - Process:  
+    - Extraction: Schedule regular ETL jobs (using Apache Airflow) to pull updated datasets.
+    - Transformation: Clean data by handling missing values, normalizing fields, and performing feature extraction.
+    - Loading: Store the transformed data in persistent storage.
+- Online Data Pipeline:  
+  - Data Source:  
+    - Edge Device (Raspberry Pi) providing real-time GPS location data.
+  - Process:  
+    - Data Simulation & Ingestion: Use a lightweight script (via REST API or MQTT) to simulate real-time GPS streaming.
+    - Real-Time Processing: Ingest data into a streaming pipeline, applying minimal cleaning (e.g., timestamp validation, coordinate formatting).
+    - Storage & Usage:  
+      - Store the online data temporarily for immediate use by the Inference API.
+      - Log the data in persistent storage for later model re-training and evaluation.
 (2) Relevant Diagram Part
 
 (3) Justification
-
+- Offline Pipeline:  
+  Automates ingestion and ensures high-quality historical data for robust model training.
+- Online Pipeline:  
+  Simulates production conditions with real-time data ingestion, enabling immediate inference and continuous learning.
+- Persistent Storage:  
+  Decouples compute from data, ensuring reliability and ease of maintenance during scaling or system updates.
 (4) Lecture Material Reference
+- The implementation of data pipeline will reference the Lab 8 manual on Data pipeline. The contents listed for this section is subject to change when the reference is released.
+
 
 (5) Difficulty Points (if any)
-- Data dashboard
+- Data Dashboard:  
+  Implement an interactive dashboard to visualize:
+    - Real-time data ingestion rates.
+    - Data quality metrics.
+    - ETL job performance.
 
 #### Continuous X
 
