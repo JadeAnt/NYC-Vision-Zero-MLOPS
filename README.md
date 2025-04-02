@@ -168,6 +168,7 @@ optional "difficulty" points you are attempting. -->
   Simulates production conditions with real-time data ingestion, enabling immediate inference and continuous learning.
 - Persistent Storage:  
   Decouples compute from data, ensuring reliability and ease of maintenance during scaling or system updates.
+
 (4) Lecture Material Reference
 - The implementation of data pipeline will reference the Lab 8 manual on Data pipeline. The contents listed for this section is subject to change when the reference is released.
 
