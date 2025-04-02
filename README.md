@@ -35,6 +35,7 @@ link to their contributions in all repos here. -->
 <!-- Overall digram of system. Doesn't need polish, does need to show all the pieces. 
 Must include: all the hardware, all the containers/software platforms, all the models, 
 all the data. -->
+![System diagram here](./System_diagram.PNG)
 
 ### Summary of outside materials
 
@@ -61,11 +62,10 @@ The table below shows an example, it is not a recommendation. -->
 
 | Requirement     | How many/when                                     | Justification |
 |-----------------|---------------------------------------------------|---------------|
-| `m1.medium` VMs | 3 for entire project duration                     | ...           |
+| `m1.medium` VMs | 4 for entire project duration                     | ...           |
 | `gpu_mi100`     | 4 hour block twice a week                         |               |
 | Floating IPs    | 1 for entire project duration, 1 for sporadic use |               |
-| `on-device`             |                                                   |               |
-| etc             |                                                   |               |
+| `Rasberry-Pi 5` | 1 for entire project duration, 2 hour block twice a week |               |
 
 ### Detailed design plan
 
