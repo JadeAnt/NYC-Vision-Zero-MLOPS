@@ -159,6 +159,7 @@ optional "difficulty" points you are attempting. -->
     - Storage & Usage:  
       - Store the online data temporarily for immediate use by the Inference API.
       - Log the data in persistent storage for later model re-training and evaluation.
+
 (2) Relevant Diagram Part
 
 (3) Justification
