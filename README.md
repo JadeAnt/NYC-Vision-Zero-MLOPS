@@ -191,6 +191,10 @@ optional "difficulty" points you are attempting. -->
       - Log the data in persistent storage for later model re-training and evaluation.
 
 (2) Relevant Diagram Part
+- The data pipeline in this system diagram is in the development phase and it begins with the collection of raw data from various sources. This data undergoes exploratory data analysis (EDA) to identify patterns and issues, followed by cleaning, preprocessing, and transformation for model readiness. 
+
+- There is also a streaming pipeline in the system diagram which is used to handle real time data prediction. In the architecture, it’s integrated with online serving to handle dynamic, real-time data inputs and outputs.
+
 
 (3) Justification
 - Offline Pipeline:  
