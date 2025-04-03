@@ -10,13 +10,13 @@ propose a system for a science problem, for example.)
 -->
 
 ### Value Proposition
-Vision Zero hopes to reduce the amount of general vehicular related incidents. With our proposed system we can create a MLOPS pipeline using the various types of information present within our datasets to create a model, or models, to classify the risk of possible incidents on any given day. Classifications would be as follows, subject to change; Dangerous, Somewhat Dangerous, Average, Somewhat Safe, and Safe. The NYPD, NYCDOT, and other entities would also be able to use this information to better predict potential incidents based on existing daily conditions, leading to faster response times, safer roads.
+Vision Zero hopes to reduce the amount of general vehicular related incidents. With our proposed system we can create a MLOPS pipeline using the various types of information present within our datasets to create a model, or models, to classify the risk of possible incidents on any given day. Classifications would be as follows, subject to change; Dangerous, Somewhat Dangerous, Average, Somewhat Safe, and Safe. The NYPD, NYCDOT, and other entities would also be able to use this information to better predict potential incidents based on existing daily conditions, leading to faster response times and safer roads.
 
 <!-- Whats the non ML status Quo?-->
-Current Vision Zero and other NYC agencies current use the recorded data from the NYPD and Vision Zero initiative to push for legistlation for improvements in road safety. This is mainly displayed with dashboards and reports showcasing historical data. With our system we'll implement an ML solution to help with the classification of the danger level for the current area of the user.
+Current Vision Zero and other NYC agencies use the recorded data from the NYPD and Vision Zero initiative to push for legistlation for improvements in road safety. This is mainly displayed with dashboards and reports showcasing historical data. With our system we'll implement an ML solution to help with the classification of the danger level for the current area of the user.
 
 <!-- What are the business metrics to measure?-->
-Our goal with Vision Zero is to propose this system to various groups, such as the NYPD, DOT, Citibike, NYC government, MTA, Mailing services, and other entities with interest in the protection of pedestriants, drivers, and general NYC-goers. Our business metrics are focused on the reduction in fatal vehicular incidents over time, quantifiable by the reported Citywide Traffic Statistics from the DOT. Consistent to high user usage rate of the application, in addition to user trust in the reliablity of the classifications are also metrics we use to verify the efficacy of the application.
+Our goal with Vision Zero is to propose this system to various groups, such as the NYPD, DOT, Citibike, NYC government, MTA, Mailing services, news agencies and other entities with interest in the protection of pedestriants, drivers, and general NYC-goers. Our business metrics are focused on the reduction in fatal vehicular incidents over time, quantifiable by the reported Citywide Traffic Statistics from the DOT. As well as consistent to high user usage rate of the application, in addition to user trust in the reliablity of the classifications are also metrics we use to verify the efficacy of the application.
 
 
 ### Contributors
@@ -159,9 +159,9 @@ Serving the model via a REST API enables seamless integration with the frontend 
 This section directly aligns with Units 6 and 7. Unit 6 emphasized serving models efficiently and optimizing for performance, especially on constrained devices. Unit 7 introduced strategies for offline evaluation, load testing, canary deployments, and feedback loops to ensure model quality and responsiveness in production.
 
 (5) Difficulty Points (Optional):
-- Multi-platform serving: We plan to evaluate model performance on CPU, GPU, and edge devices.
+<!-- - Multi-platform serving: We plan to evaluate model performance on CPU, GPU, and edge devices. -->
 - Monitor for data drift: We will compare real-time input distributions to training data using statistical methods (e.g., KS-test).
-- Monitor for model degradation: We will track prediction quality over time and implement a dashboard to alert on degradation. Retraining will be automatically triggered when necessary using new production-labeled data.
+<!-- - Monitor for model degradation: We will track prediction quality over time and implement a dashboard to alert on degradation. Retraining will be automatically triggered when necessary using new production-labeled data. -->
 
 #### Data pipeline
 
