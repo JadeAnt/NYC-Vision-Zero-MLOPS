@@ -9,7 +9,11 @@ judged on? (Note that the “service” does not have to be for general users; y
 propose a system for a science problem, for example.)
 -->
 
-Value Proposition: Vision Zero hopes to reduce the amount of general vehicular related incidents. With our proposed system we can create a dashboard using the various types of information present within our datasets to create a decision tree model, or models, to classify the risk of possible incidents on any given day. Classifications would be as follows, subject to change; Dangerous, Somewhat Dangerous, Average, Somewhat Safe, and Safe.The NYPD and NYCDOT would also be able to use this information to better predict potential incidents based on existing daily conditions. Leading to faster response times, safer roads.
+Value Proposition: Vision Zero hopes to reduce the amount of general vehicular related incidents. With our proposed system we can create a dashboard using the various types of information present within our datasets to create a model, or models, to classify the risk of possible incidents on any given day. Classifications would be as follows, subject to change; Dangerous, Somewhat Dangerous, Average, Somewhat Safe, and Safe. The NYPD and NYCDOT would also be able to use this information to better predict potential incidents based on existing daily conditions. Leading to faster response times, safer roads.
+
+<!-- What are the business metrics to measure?-->
+
+<!-- Whats the non ML status Quo?-->
 
 
 ### Contributors
@@ -122,7 +126,7 @@ and which optional "difficulty" points you are attempting. -->
 (1) Strategy:
 We will serve the trained model using a FastAPI-based REST API. This API will be containerized using Docker and deployed on a Chameleon VM with a floating IP. The endpoint will accept input data and return a risk classification label along with a confidence score. This service will be accessible by the front-end dashboard for real-time prediction.
 
-Since the model is expected to run on an edge device (e.g., Dev Board Coral), it must be both small and fast. We will explore model-level optimizations including dynamic and static quantization, pruning, and possibly reduced-precision conversion. We may also explore graph optimizations using TorchScript or ONNX.
+Since the model is expected to run on an edge device (e.g., Rasberry Pi 5), it must be both small and fast. We will explore model-level optimizations including dynamic and static quantization, pruning, and possibly reduced-precision conversion. We may also explore graph optimizations using TorchScript or ONNX.
 
 Once deployed, we will define and run an automated offline evaluation suite. This includes metrics like accuracy, precision, recall, F1-score, and ROC-AUC, along with slice-based analysis (e.g., by borough or time). Known failure modes (e.g., holidays, traffic spikes) will be tested, and results will be logged to MLflow.
 
