@@ -120,47 +120,34 @@ and which optional "difficulty" points you are attempting. -->
 #### Model serving and monitoring platforms
 
 (1) Strategy:
-We will serve the trained model using a FastAPI-based REST endpoint. The model will be containerized with Docker and deployed on a Chameleon VM with a floating IP. The API will accept input data and return a risk classification label along with a confidence score. It will be accessible by the front-end dashboard for real-time inference.
+We will serve the trained model using a FastAPI-based REST API. This API will be containerized using Docker and deployed on a Chameleon VM with a floating IP. The endpoint will accept input data and return a risk classification label along with a confidence score. This service will be accessible by the front-end dashboard for real-time prediction.
 
-Since our intended use case involves deploying to edge devices (e.g., Dev Board Coral), the model must be lightweight and fast. We will test model-level optimizations such as dynamic and static quantization, pruning, and possibly reduced-precision conversion to meet size and latency constraints. We may also explore graph optimizations depending on the final model framework (e.g., TorchScript or ONNX export).
+Since the model is expected to run on an edge device (e.g., Dev Board Coral), it must be both small and fast. We will explore model-level optimizations including dynamic and static quantization, pruning, and possibly reduced-precision conversion. We may also explore graph optimizations using TorchScript or ONNX.
 
+Once deployed, we will define and run an automated offline evaluation suite. This includes metrics like accuracy, precision, recall, F1-score, and ROC-AUC, along with slice-based analysis (e.g., by borough or time). Known failure modes (e.g., holidays, traffic spikes) will be tested, and results will be logged to MLflow.
 
+Following staging deployment, we will conduct load testing using synthetic input data to measure system latency, throughput, and failure rate. After staging passes, we will run a canary evaluation using simulated users sending live-like inputs to the API. These predictions will be logged and compared with labeled data (as available) for quality checks.
 
-(2) Relevant Diagram Part:
+To close the loop, predictions from production use will be logged, a subset labeled, and added to the training dataset for weekly re-training. This process will be integrated into our CI/CD pipeline.
 
-              ┌────────────────────┐
-              │    Users / API     │
-              └────────┬───────────┘
-                       │
-                       ▼
-         ┌─────────────────────────────┐
-         │     FastAPI Model Server    │  ← Unit 6
-         │  (Docker container on VM)   │
-         └────────┬────────────┬───────┘
-                  │            │
-                  ▼            ▼
-      ┌────────────────┐   ┌──────────────────────┐
-      │   ML Model     │   │   Logging Module     │
-      │   (Quantized)  │   │   (Predictions + Inputs) │
-      └────────────────┘   └────────────┬─────────┘
-                                        │
-                       ┌────────────────▼──────────────┐
-                       │        Monitoring System       │  ← Unit 7
-                       │ - Drift Detection              │
-                       │ - Degradation Metrics          │
-                       │ - Slice Analysis (boroughs)    │
-                       │ - Streamlit Dashboard (Optional) │
-                       └───────────────────────────────┘
-                       
+(2) Diagram Description:
+- The user or dashboard sends input data to a FastAPI endpoint.
+- The API loads the trained model, runs inference, and returns a prediction.
+- Inputs and predictions are logged in real-time.
+- Evaluation and monitoring scripts analyze logs for drift or degradation.
+- MLFlow stores evaluation results and alerts trigger retraining if needed.
+- A dashboard (e.g., Streamlit or Grafana) visualizes model health and alerts.
+
 (3) Justification:
-Serving through a containerized REST API enables flexibility and integration with multiple frontends. By applying model-level optimizations, we can reduce memory and latency overhead—crucial for edge deployment. Using standard tools like Docker and FastAPI supports cloud-native principles discussed in class and labs.
+Serving the model via a REST API enables seamless integration with the frontend and supports scalable deployment. Edge-device constraints require us to optimize for size and latency. Continuous evaluation ensures the model remains accurate, fair, and robust over time, even as real-world conditions change.
 
 (4) Lecture Material Reference:
-This aligns with Unit 6's focus on lightweight model serving, on-device constraints, and API-first access. Lab 6 is the basis for our deployment structure, and we follow its edge-device-oriented guidance.
+This section directly aligns with Units 6 and 7. Unit 6 emphasized serving models efficiently and optimizing for performance, especially on constrained devices. Unit 7 introduced strategies for offline evaluation, load testing, canary deployments, and feedback loops to ensure model quality and responsiveness in production.
 
 (5) Difficulty Points (Optional):
-We plan to test the model on multiple hardware backends: server-grade GPU, CPU, and on-device. We will compare inference time, memory use, and deployment cost across setups.
-
+- Multi-platform serving: We plan to evaluate model performance on CPU, GPU, and edge devices.
+- Monitor for data drift: We will compare real-time input distributions to training data using statistical methods (e.g., KS-test).
+- Monitor for model degradation: We will track prediction quality over time and implement a dashboard to alert on degradation. Retraining will be automatically triggered when necessary using new production-labeled data.
 
 #### Data pipeline
 
