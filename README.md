@@ -119,19 +119,48 @@ and which optional "difficulty" points you are attempting. -->
 
 #### Model serving and monitoring platforms
 
-<!-- Make sure to clarify how you will satisfy the Unit 6 and Unit 7 requirements, 
-and which optional "difficulty" points you are attempting. -->
+(1) Strategy:
+We will serve the trained model using a FastAPI-based REST endpoint. The model will be containerized with Docker and deployed on a Chameleon VM with a floating IP. The API will accept input data and return a risk classification label along with a confidence score. It will be accessible by the front-end dashboard for real-time inference.
 
-(1) Strategy
+Since our intended use case involves deploying to edge devices (e.g., Dev Board Coral), the model must be lightweight and fast. We will test model-level optimizations such as dynamic and static quantization, pruning, and possibly reduced-precision conversion to meet size and latency constraints. We may also explore graph optimizations depending on the final model framework (e.g., TorchScript or ONNX export).
 
-(2) Relevant Diagram Part
 
-(3) Justification
 
-(4) Lecture Material Reference
+(2) Relevant Diagram Part:
 
-(5) Difficulty Points (if any)
-- Data drift (or degredation) dashboard
+              ┌────────────────────┐
+              │    Users / API     │
+              └────────┬───────────┘
+                       │
+                       ▼
+         ┌─────────────────────────────┐
+         │     FastAPI Model Server    │  ← Unit 6
+         │  (Docker container on VM)   │
+         └────────┬────────────┬───────┘
+                  │            │
+                  ▼            ▼
+      ┌────────────────┐   ┌──────────────────────┐
+      │   ML Model     │   │   Logging Module     │
+      │   (Quantized)  │   │   (Predictions + Inputs) │
+      └────────────────┘   └────────────┬─────────┘
+                                        │
+                       ┌────────────────▼──────────────┐
+                       │        Monitoring System       │  ← Unit 7
+                       │ - Drift Detection              │
+                       │ - Degradation Metrics          │
+                       │ - Slice Analysis (boroughs)    │
+                       │ - Streamlit Dashboard (Optional) │
+                       └───────────────────────────────┘
+                       
+(3) Justification:
+Serving through a containerized REST API enables flexibility and integration with multiple frontends. By applying model-level optimizations, we can reduce memory and latency overhead—crucial for edge deployment. Using standard tools like Docker and FastAPI supports cloud-native principles discussed in class and labs.
+
+(4) Lecture Material Reference:
+This aligns with Unit 6's focus on lightweight model serving, on-device constraints, and API-first access. Lab 6 is the basis for our deployment structure, and we follow its edge-device-oriented guidance.
+
+(5) Difficulty Points (Optional):
+We plan to test the model on multiple hardware backends: server-grade GPU, CPU, and on-device. We will compare inference time, memory use, and deployment cost across setups.
+
 
 #### Data pipeline
 
