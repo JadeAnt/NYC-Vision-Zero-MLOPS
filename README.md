@@ -13,6 +13,7 @@ Value Proposition: Vision Zero hopes to reduce the amount of general vehicular r
 
 <!-- What are the business metrics to measure?-->
 
+
 <!-- Whats the non ML status Quo?-->
 
 
@@ -27,8 +28,8 @@ link to their contributions in all repos here. -->
 | Name                            | Responsible for | Link to their commits in this repo |
 |---------------------------------|-----------------|------------------------------------|
 | All team members                |                 |                                    |
-| Jaden Antoine                   |  Model Training               |         [Link](https://github.com/JadeAnt/NYC-Vision-Zero-MLOPS/commits/main/?author=JadeAnt)                           |
-| Jason Widjaja                   |  Continuous Pipeline               |      [Link](https://github.com/JadeAnt/NYC-Vision-Zero-MLOPS/commits/main/?author=JasonW35214)                                 |
+| Jaden Antoine                   |  Model Training and Training Platforms             |         [Link](https://github.com/JadeAnt/NYC-Vision-Zero-MLOPS/commits/main/?author=JadeAnt)                           |
+| Jason Widjaja                   |  Continuous X               |      [Link](https://github.com/JadeAnt/NYC-Vision-Zero-MLOPS/commits/main/?author=JasonW35214)                                 |
 | Neha Nainan                     |  Data Pipeline               |          [Link](https://github.com/JadeAnt/NYC-Vision-Zero-MLOPS/commits/main/?author=nehaann23)                             |
 | Parth Naik    |  Model Serving and Monitoring               |           [Link](https://github.com/JadeAnt/NYC-Vision-Zero-MLOPS/commits/main/?author=Parthnaik123)                            |
 
@@ -67,9 +68,9 @@ The table below shows an example, it is not a recommendation. -->
 | Requirement     | How many/when                                     | Justification |
 |-----------------|---------------------------------------------------|---------------|
 | `m1.medium` VMs | 4 for entire project duration                     | ...           |
-| `gpu_mi100`     | 4 hour block twice a week                         |               |
+| `gpu_mi100`     | 4 hour block twice a week                         |      We will be attempting the difficulty point for Model Training and Training Platforms by training a BERT model, which is an LLM that will require a gpu for reduced training and inference times.          |
 | Floating IPs    | 1 for entire project duration, 1 for sporadic use |               |
-| `Rasberry-Pi 5` | 1 for entire project duration, 2 hour block twice a week |               |
+| `Rasberry-Pi 5` | 1 for entire project duration, 2 hour block twice a week |     As our deployments are on-device focused, an edge device is needed to allow us to test the efficiency of our model and pipeline. Both our canary and production environments will require an edge device for testing artifical users.        |
 
 ### Detailed design plan
 
@@ -98,6 +99,13 @@ and which optional "difficulty" points you are attempting. -->
 
 
 (2) Relevant Diagram Part
+- Within the system diagram the bulk of the model training and training platforms section of the project functions within the Development environment.
+- The data sourcing from our datasets, exploratory data analysis, model training, tracking with MLFlow, and scheduling using Ray cluster
+- Data will be stored within our persistent storage within Chameleon
+- Using Docker containers to manage the different sections of the training pipeline
+- A retrainning trigger (schedule-based, etc..) will exist here as well to trigger model retraining
+- Model versions will be stored in model registry
+- Model will move to the Staging environment once all development steps have been completed
 
 (3) Justification
 - For our project, our end user would hypothetically use this on an edge device. As such it is important for our final model, or models, to be able to be deployed on such a device at all
@@ -194,7 +202,7 @@ optional "difficulty" points you are attempting. -->
 - The implementation of data pipeline will reference the Lab 8 manual on Data pipeline. The contents listed for this section is subject to change when the reference is released.
 
 
-(5) Difficulty Points (if any)
+(5) Difficulty Points 
 - Data Dashboard:  
   Implement an interactive dashboard to visualize:
     - Real-time data ingestion rates.
