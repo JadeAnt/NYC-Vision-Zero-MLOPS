@@ -1,3 +1,4 @@
+# Private IP addresses for hosts (node1, node2, node3)
 all:
   hosts:
     node1:
