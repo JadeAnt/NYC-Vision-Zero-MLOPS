@@ -1,3 +1,4 @@
+# TO-DO: will need to add/remove hosts (node1, node2, node3) as necessary
 ---
 - name: Post-Install kubectl Setup
   hosts: node1,node2
