@@ -1,4 +1,4 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: NYC-Vision-Zero-platform
+  name: nyc-vision-zero-platform
