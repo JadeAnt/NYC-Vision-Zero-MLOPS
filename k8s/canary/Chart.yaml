@@ -1,0 +1,4 @@
+apiVersion: v2
+name: NYC-Vision-Zero-canary
+version: 1.0.0
+description: NYC-Vision-Zero Canary Deployment
