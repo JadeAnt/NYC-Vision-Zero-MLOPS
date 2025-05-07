@@ -1,4 +1,5 @@
 fastapi
 uvicorn
-numpy==2.2.5
+numpy
+joblib
 scikit-learn
