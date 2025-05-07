@@ -115,8 +115,8 @@ spec:
         requests:
           memory: "1500Mi"
       args:
-        - --dockerfile=/mnt/workspace/Dockerfile
-        - --context=/mnt/workspace
+        - --dockerfile=/mnt/workspace/fastapi/Dockerfile   # added /fastapi
+        - --context=/mnt/workspace/fastapi                  # added /fastapi
         - --destination=registry.kube-system.svc.cluster.local:5000/nyc-vision-zero-app:staging-1.0.{{inputs.parameters.model-version}}
         - --insecure
       volumeMounts:
