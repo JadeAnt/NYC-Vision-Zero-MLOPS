@@ -3,7 +3,7 @@
   hosts: node1
   become: yes
   vars:
-    app_name: NYC-Vision-Zero-canary
+    app_name: nyc-vision-zero-canary
     repo_url: https://github.com/JadeAnt/NYC-Vision-Zero-MLOPS.git
     app_path: k8s/canary
     argocd_namespace: argocd
@@ -31,8 +31,8 @@
       set_fact:
         external_ip: "{{ ansible_all_ipv4_addresses | select('match', '^10\\.56\\..*') | list | first }}"
 
-    - name: Create NYC-Vision-Zero-canary namespace if missing
-      command: kubectl create namespace NYC-Vision-Zero-canary
+    - name: Create nyc-vision-zero-canary namespace if missing
+      command: kubectl create namespace nyc-vision-zero-canary
       register: ns_create
       failed_when: ns_create.rc != 0 and "AlreadyExists" not in ns_create.stderr
       changed_when: "'created' in ns_create.stdout"
