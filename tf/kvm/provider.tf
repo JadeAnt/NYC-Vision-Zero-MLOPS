@@ -2,10 +2,19 @@ provider "openstack" {
   cloud = "openstack"
 }
 
+/*
 provider "openstack" {
-  cloud = "chiedge"
+  alias = "openstack"
+  cloud = "openstack" 
 }
 
 provider "openstack" {
-  cloud = "chitacc"
+  alias = "chiedge"
+  cloud = "chiedge"   
 }
+
+provider "openstack" {
+  alias = "chitacc"
+  cloud = "chitacc"   
+}
+*/
