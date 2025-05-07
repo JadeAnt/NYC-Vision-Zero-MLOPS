@@ -52,9 +52,9 @@ spec:
       args:
         - --dockerfile=/mnt/workspace/Dockerfile
         - --context=/mnt/workspace
-        - --destination=registry.kube-system.svc.cluster.local:5000/NYC-Vision-Zero-app:staging-1.0.0
-        - --destination=registry.kube-system.svc.cluster.local:5000/NYC-Vision-Zero-app:canary-1.0.0
-        - --destination=registry.kube-system.svc.cluster.local:5000/NYC-Vision-Zero-app:production-1.0.0
+        - --destination=registry.kube-system.svc.cluster.local:5000/nyc-vision-zero-app:staging-1.0.0
+        - --destination=registry.kube-system.svc.cluster.local:5000/nyc-vision-zero-app:canary-1.0.0
+        - --destination=registry.kube-system.svc.cluster.local:5000/nyc-vision-zero-app:production-1.0.0
         - --insecure
       volumeMounts:
         - name: workdir
