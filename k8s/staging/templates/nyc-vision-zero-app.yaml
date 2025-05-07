@@ -2,21 +2,21 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: NYC-Vision-Zero-app
-  namespace: NYC-Vision-Zero-staging
+  name: nyc-vision-zero-app
+  namespace: nyc-vision-zero-staging
 
 spec:
   replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
-      app: NYC-Vision-Zero-app
+      app: nyc-vision-zero-app
   template:
     metadata:
       labels:
-        app: NYC-Vision-Zero-app
+        app: nyc-vision-zero-app
     spec:
       containers:
-        - name: NYC-Vision-Zero-app
+        - name: nyc-vision-zero-app
           image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
           ports:
             - containerPort: 8000
@@ -27,11 +27,11 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: NYC-Vision-Zero-app
+  name: nyc-vision-zero-app
   namespace: gourmetgram-staging
 spec:
   selector:
-    app: NYC-Vision-Zero-app
+    app: nyc-vision-zero-app
   ports:
     - port: {{ .Values.service.port }}
       targetPort: 8000
