@@ -1,67 +1,58 @@
 from fastapi import FastAPI
 from pydantic import BaseModel, Field
-import base64
-import torch
-import torch.nn.functional as F
-import torchvision.transforms as transforms
-from PIL import Image
-import io
+import pickle
 import numpy as np
 
 app = FastAPI(
-    title="Food Classification API",
-    description="API for classifying food items from images",
+    title="Crash Severity Prediction API",
+    description="API for predicting crash severity based on input features",
     version="1.0.0"
 )
-# Define the request and response models
-class ImageRequest(BaseModel):
-    image: str  # Base64 encoded image
+
+class CrashRequest(BaseModel):
+    features: list[float] = Field(
+        ..., 
+        description="List of feature values in the order used during model training"
+    )
 
 class PredictionResponse(BaseModel):
-    prediction: str
-    probability: float = Field(..., ge=0, le=1)  # Ensures probability is between 0 and 1
+    severity: str = Field(
+        ...,
+        description="Predicted severity class"
+    )
+    probability: float = Field(
+        ...,
+        ge=0, 
+        le=1,
+        description="Prediction probability for the predicted class"
+    )
 
-# Set device (GPU if available, otherwise CPU)
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+# Load the crash severity model
+MODEL_PATH = "crash_model.pkl"
+with open(MODEL_PATH, "rb") as f:
+    model = pickle.load(f)
 
-# Load the Food11 model
-MODEL_PATH = "food11.pth"
-model = torch.load(MODEL_PATH, map_location=device, weights_only=False)
-model.to(device)
-model.eval()
+# If the model has class labels, retrieve them
+class_labels = getattr(model, "classes_", None)
 
-# Define class labels
-classes = np.array(["Bread", "Dairy product", "Dessert", "Egg", "Fried food",
-    "Meat", "Noodles/Pasta", "Rice", "Seafood", "Soup", "Vegetable/Fruit"])
+@app.post("/predict", response_model=PredictionResponse)
+def predict_crash(request: CrashRequest):
+    # Convert the list of features into the required shape
+    data = np.array(request.features).reshape(1, -1)
 
-# Define the image preprocessing function
-def preprocess_image(img):
-    transform = transforms.Compose([
-        transforms.Resize((224, 224)),
-        transforms.CenterCrop(224),
-        transforms.ToTensor(),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-    ])
-    return transform(img).unsqueeze(0)
+    # Perform prediction
+    if hasattr(model, "predict_proba"):
+        proba = model.predict_proba(data)
+        pred_idx = int(np.argmax(proba, axis=1)[0])
+        pred_label = class_labels[pred_idx] if class_labels is not None else pred_idx
+        confidence = float(proba[0, pred_idx])
+    else:
+        # If predict_proba is not available, fallback to predict
+        pred = model.predict(data)[0]
+        pred_label = pred
+        confidence = None
 
-@app.post("/predict")
-def predict_image(request: ImageRequest):
-    try:
-        # Decode base64 image
-        image_data = base64.b64decode(request.image)
-        image = Image.open(io.BytesIO(image_data)).convert("RGB")
-        
-        # Preprocess the image
-        image = preprocess_image(image).to(device)
-
-        # Run inference
-        with torch.no_grad():
-            output = model(image)
-            probabilities = F.softmax(output, dim=1)  # Apply softmax to get probabilities
-            predicted_class = torch.argmax(probabilities, 1).item()
-            confidence = probabilities[0, predicted_class].item()  # Get the probability
-
-        return PredictionResponse(prediction=classes[predicted_class], probability=confidence)
-
-    except Exception as e:
-        return {"error": str(e)}
+    return PredictionResponse(
+        severity=str(pred_label),
+        probability=confidence if confidence is not None else 0.0
+    )
