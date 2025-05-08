@@ -57,8 +57,8 @@ spec:
   selector:
     app: grafana
   ports:
-    - port: 3000
-      targetPort: 3000
+    - port: 8000
+      targetPort: 8000
       protocol: TCP
   externalIPs:
     - {{ .Values.grafana.externalIP }}  # External IP configured in values.yaml
