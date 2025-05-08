@@ -1,7 +1,3 @@
-data "openstack_networking_network_v2" "sharednet2" {
-  name = "sharednet2"
-}
-
 resource "openstack_networking_network_v2" "private_net" {
   name                  = "private-net-mlops-${var.suffix}"
   port_security_enabled = false
@@ -37,8 +33,9 @@ resource "openstack_networking_port_v2" "sharednet2_ports" {
       data.openstack_networking_secgroup_v2.allow_8080.id,                 # canary
       data.openstack_networking_secgroup_v2.allow_8081.id,                 # production
       data.openstack_networking_secgroup_v2.allow_http_80.id,
-      data.openstack_networking_secgroup_v2.allow_9090.id                  # argo cd
-      data.openstack_networking_secgroup_v2.allow_3000.id
+      data.openstack_networking_secgroup_v2.allow_9090.id,                  # argo cd, prometheus
+      data.openstack_networking_secgroup_v2.allow_3000.id,                 # grafana
+      data.openstack_networking_secgroup_v2.allow_8265.id                  # Ray
     ]
 }
 

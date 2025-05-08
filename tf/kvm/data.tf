@@ -3,6 +3,10 @@
 #  name = "actual-name-in-openstack"
 # }
 
+data "openstack_networking_network_v2" "sharednet2" {
+  name = "sharednet2"
+}
+
 data "openstack_networking_network_v2" "sharednet1" {
   name = "sharednet1"
 }
@@ -41,4 +45,8 @@ data "openstack_networking_secgroup_v2" "allow_9090" {
 
 data "openstack_networking_secgroup_v2" "allow_3000" {
   name = "allow-3000"
+}
+
+data "openstack_networking_secgroup_v2" "allow_8265" {
+  name = "allow-8265"
 }
