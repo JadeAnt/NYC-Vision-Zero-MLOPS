@@ -38,6 +38,7 @@ resource "openstack_networking_port_v2" "sharednet2_ports" {
       data.openstack_networking_secgroup_v2.allow_8081.id,                 # production
       data.openstack_networking_secgroup_v2.allow_http_80.id,
       data.openstack_networking_secgroup_v2.allow_9090.id                  # argo cd
+      data.openstack_networking_secgroup_v2.allow_3000.id
     ]
 }
 
