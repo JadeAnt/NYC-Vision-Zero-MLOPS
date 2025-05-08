@@ -52,7 +52,7 @@ spec:
       args:
         - --dockerfile=/mnt/workspace/fastapi/Dockerfile                                                          # edit path for Dockerfile to check fastapi folder
         - --context=/mnt/workspace/fastapi/                                                                       # edit path for Dockerfile to check fastapi folder
-        - --destination=registry.kube-system.svc.cluster.local:5000/nyc-vision-zero-app:staging-1.0.0
+        - --destination=registry.kube-system.svc.cluster.local:5000/nyc-vision-zero-app:staging-1.0.1
         - --destination=registry.kube-system.svc.cluster.local:5000/nyc-vision-zero-app:canary-1.0.0
         - --destination=registry.kube-system.svc.cluster.local:5000/nyc-vision-zero-app:production-1.0.0
         - --insecure
