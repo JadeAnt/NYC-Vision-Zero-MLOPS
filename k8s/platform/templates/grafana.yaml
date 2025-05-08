@@ -60,5 +60,5 @@ spec:
     - port: 3000
       targetPort: 3000
       protocol: TCP
-  externalIPs:
-    - {{ .Values.grafana.externalIP }}  # External IP configured in values.yaml
+  # externalIPs:
+  #   - {{ .Values.grafana.externalIP }}  # External IP configured in values.yaml
