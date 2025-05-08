@@ -26,6 +26,18 @@ spec:
           args:
             - |
               ray start --head --port=6379 --dashboard-host=0.0.0.0 --dashboard-port=8265
+          readinessProbe:
+            httpGet:
+              path: /api/info
+              port: 8265
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /api/info
+              port: 8265
+            initialDelaySeconds: 30
+            periodSeconds: 20
           volumeMounts: #added volumes to stop warning
             - mountPath: /dev/shm
               name: dshm
@@ -58,7 +70,18 @@ spec:
           image: rayproject/ray:latest
           command: ['/bin/sh', '-c']
           args:
-            - ray start --address=ray-head:6379
+            - |
+              ray start --address=ray-head.nyc-vision-zero-platform.svc.cluster.local:6379
+          readinessProbe:
+            tcpSocket:
+              port: 6379
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: 6379
+            initialDelaySeconds: 30
+            periodSeconds: 20
           volumeMounts:  #added volumes to stop warning
             - mountPath: /dev/shm
               name: dshm
@@ -74,15 +97,17 @@ metadata:
   name: ray-head
   namespace: nyc-vision-zero-platform
 spec:
+  type: LoadBalancer
   selector:
     app: ray
     role: head
   ports:
-    - port: 8265
+    - name: dashboard
+      port: 8265
       targetPort: 8265
-      name: dashboard
-    - port: 6379
+    - name: redis
+      port: 6379
       targetPort: 6379
-      name: redis
-  externalIPs:
-    - {{ .Values.ray.externalIP }}
+  {{- if .Values.ray.externalIP }}
+  loadBalancerIP: {{ .Values.ray.externalIP }}
+  {{- end }}
