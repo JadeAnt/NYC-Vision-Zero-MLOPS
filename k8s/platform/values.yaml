@@ -15,3 +15,10 @@ grafana:
 ray:
   externalIP: "0.0.0.0"
   workerReplicas: 2
+
+  headService:
+    enable: true
+    type: ClusterIP
+    headless: true
+    servicePort: 6379
+    servicePortName: gcs
