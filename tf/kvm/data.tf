@@ -38,3 +38,7 @@ data "openstack_networking_secgroup_v2" "allow_http_80" {
 data "openstack_networking_secgroup_v2" "allow_9090" {
   name = "allow-9090"
 }
+
+data "openstack_networking_secgroup_v2" "allow_3000" {
+  name = "allow-3000"
+}
