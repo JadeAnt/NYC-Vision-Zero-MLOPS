@@ -13,5 +13,5 @@ grafana:
   adminPassword: admin
 
 ray:
-  externalIP: "10.56.2.49"
+  externalIP: "0.0.0.0"
   workerReplicas: 2
