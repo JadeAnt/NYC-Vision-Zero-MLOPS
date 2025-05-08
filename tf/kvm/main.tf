@@ -1,3 +1,7 @@
+data "openstack_networking_network_v2" "sharednet2" {
+  name = "sharednet2"
+}
+
 resource "openstack_networking_network_v2" "private_net" {
   name                  = "private-net-mlops-${var.suffix}"
   port_security_enabled = false
