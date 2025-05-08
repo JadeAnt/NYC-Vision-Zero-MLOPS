@@ -11,3 +11,7 @@ grafana:
   externalIP: "0.0.0.0"
   adminUser: admin
   adminPassword: admin
+
+ray:
+  externalIP: "0.0.0.0"
+  workerReplicas: 2
