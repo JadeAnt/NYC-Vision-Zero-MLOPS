@@ -18,7 +18,9 @@ ray:
 
   headService:
     enable: true
-    type: ClusterIP
-    headless: true
-    servicePort: 6379
-    servicePortName: gcs
+    type: LoadBalancer
+    ports:
+      - name: dashboard
+        port: 8265
+      - name: redis
+        port: 6379
