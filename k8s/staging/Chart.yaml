@@ -1,4 +1,4 @@
 apiVersion: v2
 name: nyc-vision-zero-staging
-version: 1.0.1
+version: 1.0.3
 description: NYC-Vision-Zero Staging Deployment
