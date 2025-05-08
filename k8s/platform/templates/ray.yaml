@@ -48,56 +48,12 @@ spec:
             sizeLimit: 1Gi
 
 ---
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: ray-worker
-  namespace: nyc-vision-zero-platform
-spec:
-  replicas: {{ .Values.ray.workerReplicas }}
-  selector:
-    matchLabels:
-      app: ray
-      role: worker
-  template:
-    metadata:
-      labels:
-        app: ray
-        role: worker
-    spec:
-      containers:
-        - name: ray-worker
-          image: rayproject/ray:latest
-          command: ['/bin/sh', '-c']
-          args:
-            - |
-              ray start --address=ray-head.nyc-vision-zero-platform.svc.cluster.local:6379
-          readinessProbe:
-            tcpSocket:
-              port: 6379
-            initialDelaySeconds: 10
-            periodSeconds: 10
-          livenessProbe:
-            tcpSocket:
-              port: 6379
-            initialDelaySeconds: 30
-            periodSeconds: 20
-          volumeMounts:  #added volumes to stop warning
-            - mountPath: /dev/shm
-              name: dshm
-      volumes:
-        - name: dshm
-          emptyDir:
-            medium: Memory
-            sizeLimit: 1Gi
----
 apiVersion: v1
 kind: Service
 metadata:
   name: ray-head
   namespace: nyc-vision-zero-platform
 spec:
-  type: LoadBalancer
   selector:
     app: ray
     role: head
@@ -108,6 +64,5 @@ spec:
     - name: redis
       port: 6379
       targetPort: 6379
-  {{- if .Values.ray.externalIP }}
-  loadBalancerIP: {{ .Values.ray.externalIP }}
-  {{- end }}
+  externalIPs:
+    - {{ .Values.ray.externalIP }}
