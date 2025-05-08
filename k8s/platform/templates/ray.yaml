@@ -33,7 +33,7 @@ metadata:
   name: ray-worker
   namespace: nyc-vision-zero-platform
 spec:
-  replicas: { { .Values.ray.workerReplicas } }
+  replicas: {{ .Values.ray.workerReplicas }}
   selector:
     matchLabels:
       app: ray
@@ -68,4 +68,4 @@ spec:
       targetPort: 6379
       name: redis
   externalIPs:
-    - { { .Values.ray.externalIP } }
+    - {{ .Values.ray.externalIP }}
