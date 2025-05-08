@@ -1,0 +1,64 @@
+# Persistent volume claim for Grafana dashboards and configuration
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: grafana-pvc
+  namespace: nyc-vision-zero-platform
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi  # Size of persistent storage
+
+---
+# Grafana Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana
+  namespace: nyc-vision-zero-platform
+spec:
+  replicas: 1  # Single instance is typical unless running in HA mode
+  selector:
+    matchLabels:
+      app: grafana
+  template:
+    metadata:
+      labels:
+        app: grafana
+    spec:
+      containers:
+        - name: grafana
+          image: grafana/grafana:latest
+          ports:
+            - containerPort: 3000  # Grafana web UI port
+          env:
+            - name: GF_SECURITY_ADMIN_USER
+              value: {{ .Values.grafana.adminUser }}  # Admin username from Helm values
+            - name: GF_SECURITY_ADMIN_PASSWORD
+              value: {{ .Values.grafana.adminPassword }}  # Admin password from Helm values
+          volumeMounts:
+            - name: grafana-storage
+              mountPath: /var/lib/grafana  # Default path for Grafana persistent data
+      volumes:
+        - name: grafana-storage
+          persistentVolumeClaim:
+            claimName: grafana-pvc  # Use persistent volume for dashboards/data
+
+---
+# Service to expose Grafana
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana
+  namespace: nyc-vision-zero-platform
+spec:
+  selector:
+    app: grafana
+  ports:
+    - port: 3000
+      targetPort: 3000
+      protocol: TCP
+  externalIPs:
+    - {{ .Values.grafana.externalIP }}  # External IP configured in values.yaml
