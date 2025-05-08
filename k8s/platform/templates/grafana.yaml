@@ -32,7 +32,7 @@ spec:
         - name: grafana
           image: grafana/grafana:latest
           ports:
-            - containerPort: 3000  # Grafana web UI port
+            - containerPort: 8000  # Grafana web UI port
           env:
             - name: GF_SECURITY_ADMIN_USER
               value: {{ .Values.grafana.adminUser }}  # Admin username from Helm values
