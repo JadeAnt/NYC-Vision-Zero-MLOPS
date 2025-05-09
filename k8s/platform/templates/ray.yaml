@@ -26,6 +26,12 @@ spec:
           env: # get mlflow tracking
             - name: MLFLOW_TRACKING_URI
               value: http://0.0.0.0:8000
+            - name: RAY_GRAFANA_IFRAME_HOST
+              value: http://0.0.0.0:3000
+            - name: RAY_GRAFANA_HOST
+              value: http://grafana.nyc-vision-zero-platform.svc.cluster.local:80
+            - name: RAY_PROMETHEUS_HOST
+              value: http://prometheus.nyc-vision-zero-platform.svc.cluster.local:9090
           ports:
             - containerPort: 8265 # dashboard
             - containerPort: 6379 # redis
@@ -66,6 +72,12 @@ spec:
           env: # get mlflow tracking
             - name: MLFLOW_TRACKING_URI
               value: http://0.0.0.0:8000
+            - name: RAY_GRAFANA_IFRAME_HOST
+              value: http://0.0.0.0:3000
+            - name: RAY_GRAFANA_HOST
+              value: http://grafana.nyc-vision-zero-platform.svc.cluster.local:80
+            - name: RAY_PROMETHEUS_HOST
+              value: http://prometheus.nyc-vision-zero-platform.svc.cluster.local:9090
           command: ['/bin/sh', '-c']
           args:
             - ray start --address=ray-head:6379 --block
