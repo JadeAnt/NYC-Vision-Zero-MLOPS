@@ -15,12 +15,3 @@ grafana:
 ray:
   externalIP: "0.0.0.0"
   workerReplicas: 2
-
-  headService:
-    enable: true
-    type: LoadBalancer
-    ports:
-      - name: dashboard
-        port: 8265
-      - name: redis
-        port: 6379
