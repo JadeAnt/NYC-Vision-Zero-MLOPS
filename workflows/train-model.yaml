@@ -83,7 +83,7 @@ spec:
             --address http://{{inputs.parameters.ray-head-ip}}:8265 \
             --working-dir ./repo \
             --runtime_env={
-              "pip": ["ray[train]", "ray[tune]","torch","mlflow","scikit-learn","joblib", "prefect"]
+              "pip": ["ray[train]", "ray[tune]","torch","mlflow","scikit-learn","joblib", "prefect"] \
             }  \
             -- python train/flow.py --epochs 10)
 
