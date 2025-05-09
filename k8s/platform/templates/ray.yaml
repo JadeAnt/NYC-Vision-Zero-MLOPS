@@ -4,6 +4,10 @@ kind: Deployment
 metadata:
   name: ray-head
   namespace: nyc-vision-zero-platform
+  annotations: # Let Prometheus scrape head metrics
+    prometheus.io/scrape: "true"
+    prometheus.io/path: "/metrics"
+    prometheus.io/port: "9090"
 spec:
   replicas: 1
   selector:
@@ -19,13 +23,17 @@ spec:
       containers:
         - name: ray-head
           image: rayproject/ray:latest
+          env: # get mlflow tracking
+            - name: MLFLOW_TRACKING_URI
+              value: http://0.0.0.0:8000
           ports:
             - containerPort: 8265 # dashboard
             - containerPort: 6379 # redis
+            - containerPort: 9090 # prometheus metrics
           command: ['/bin/sh', '-c']
           args:
             - |
-              ray start --head --port=6379 --dashboard-host=0.0.0.0 --dashboard-port=8265 --block
+              ray start --head --port=6379 --dashboard-host=0.0.0.0 --dashboard-port=8265 --metrics-export-port=9090 --block
           volumeMounts: #added volumes to stop warning
             - mountPath: /dev/shm
               name: dshm
@@ -34,7 +42,41 @@ spec:
           emptyDir:
             medium: Memory
             sizeLimit: 1Gi
-
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ray-worker
+  namespace: nyc-vision-zero-platform
+spec:
+  replicas: { { .Values.ray.workerReplicas } }
+  selector:
+    matchLabels:
+      app: ray
+      role: worker
+  template:
+    metadata:
+      labels:
+        app: ray
+        role: worker
+    spec:
+      containers:
+        - name: ray-worker
+          image: rayproject/ray:latest
+          env: # get mlflow tracking
+            - name: MLFLOW_TRACKING_URI
+              value: http://0.0.0.0:8000
+          command: ['/bin/sh', '-c']
+          args:
+            - ray start --address=ray-head:6379 --block
+          volumeMounts:
+            - mountPath: /dev/shm
+              name: dshm
+      volumes:
+        - name: dshm
+          emptyDir:
+            medium: Memory
+            sizeLimit: 1Gi
 ---
 apiVersion: v1
 kind: Service
@@ -52,5 +94,8 @@ spec:
     - name: redis
       port: 6379
       targetPort: 6379
+    - name: metrics
+      port: 9090
+      targetPort: 9090
   externalIPs:
     - {{ .Values.ray.externalIP }}
