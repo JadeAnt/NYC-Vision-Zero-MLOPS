@@ -1,16 +1,17 @@
 import os
 import time
-import torch
+import sklearn
 import mlflow
+import joblib
 import asyncio
-from fastapi import FastAPI, HTTPException
+#from fastapi import FastAPI, HTTPException
 from prefect import flow, task, get_run_logger
 from mlflow.tracking import MlflowClient
 
-MODEL_PATH = "food11.pth"
-MODEL_NAME = "GourmetGramFood11Model"
+MODEL_PATH = "crash_model.joblib"
+MODEL_NAME = "CrashModel"
 
-app = FastAPI()
+#app = FastAPI()
 pipeline_lock = asyncio.Lock()
 
 @task
@@ -18,7 +19,8 @@ def load_and_train_model():
     logger = get_run_logger()
     logger.info("Pretending to train, actually just loading a model...")
     time.sleep(10)
-    model = torch.load(MODEL_PATH, weights_only=False, map_location=torch.device('cpu'))
+    #model = torch.load(MODEL_PATH, weights_only=False, map_location=torch.device('cpu'))
+    model = joblib.load(MODEL_PATH)
     
     logger.info("Logging model to MLflow...")
     mlflow.pytorch.log_model(model, artifact_path="model")
@@ -63,19 +65,19 @@ def ml_pipeline_flow():
         version = register_model_if_passed(passed)
         return version
 
-@app.post("/trigger-training")
-async def trigger_training():
-    if pipeline_lock.locked():
-        raise HTTPException(status_code=423, detail="Pipeline is already running. Please wait.")
+#@app.post("/trigger-training")
+#async def trigger_training():
+#    if pipeline_lock.locked():
+#        raise HTTPException(status_code=423, detail="Pipeline is already running. Please wait.")
+#
+#    async with pipeline_lock:
+#        loop = asyncio.get_event_loop()
+#        version = await loop.run_in_executor(None, ml_pipeline_flow)
+#        if version:
+#            return {"status": "Pipeline executed successfully", "new_model_version": version}
+#        else:
+#            return {"status": "Pipeline executed, but no new model registered"}
 
-    async with pipeline_lock:
-        loop = asyncio.get_event_loop()
-        version = await loop.run_in_executor(None, ml_pipeline_flow)
-        if version:
-            return {"status": "Pipeline executed successfully", "new_model_version": version}
-        else:
-            return {"status": "Pipeline executed, but no new model registered"}
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+#if __name__ == "__main__":
+#    import uvicorn
+#    uvicorn.run(app, host="0.0.0.0", port=8000)
