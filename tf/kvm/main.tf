@@ -29,9 +29,9 @@ resource "openstack_networking_port_v2" "sharednet2_ports" {
     security_group_ids = [
       data.openstack_networking_secgroup_v2.allow_ssh.id,
       data.openstack_networking_secgroup_v2.allow_9001.id,                 # minio
-      data.openstack_networking_secgroup_v2.allow_8000.id,                 # mlflow/staging
+      data.openstack_networking_secgroup_v2.allow_8000.id,                 # mlflow
       data.openstack_networking_secgroup_v2.allow_8080.id,                 # canary
-      data.openstack_networking_secgroup_v2.allow_8081.id,                 # production
+      data.openstack_networking_secgroup_v2.allow_8081.id,                 # staging
       data.openstack_networking_secgroup_v2.allow_http_80.id,
       data.openstack_networking_secgroup_v2.allow_9090.id,                  # argo cd, prometheus
       data.openstack_networking_secgroup_v2.allow_3000.id,                 # grafana
