@@ -53,4 +53,4 @@ spec:
       port: 6379
       targetPort: 6379
   externalIPs:
-    - { { .Values.ray.externalIP } }
+    - {{ .Values.ray.externalIP }}
