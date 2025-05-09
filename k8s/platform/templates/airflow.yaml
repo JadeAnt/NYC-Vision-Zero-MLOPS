@@ -1,0 +1,189 @@
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: airflow-pvc
+  namespace: nyc-vision-zero-platform
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: airflow-webserver
+  namespace: nyc-vision-zero-platform
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: airflow-webserver
+  template:
+    metadata:
+      labels:
+        app: airflow-webserver
+    spec:
+      containers:
+        - name: airflow-webserver
+          image: apache/airflow:2.9.3-python3.11
+          command: ["/bin/bash", "-c"]
+          args:
+            - "exec airflow webserver"
+          ports:
+            - containerPort: 8080
+          env:
+            - name: AIRFLOW__CORE__EXECUTOR
+              value: LocalExecutor
+            - name: AIRFLOW__CORE__FERNET_KEY
+              value: wmSpjmCJ477jqpJE9BlzuzzI_Cw4P4RRGBZj1KeAPcU=
+            - name: AIRFLOW__DATABASE__SQL_ALCHEMY_CONN
+              value: postgresql+psycopg2://user:password@postgres/postgres
+            - name: AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION
+              value: "True"
+            - name: AIRFLOW__CORE__LOAD_EXAMPLES
+              value: "False"
+            - name: AIRFLOW__WEBSERVER__SECRET_KEY
+              value: some-secret
+            - name: LABEL_STUDIO_URL
+              value: http://label-studio:8080
+            - name: LABEL_STUDIO_USER_TOKEN
+              value: ab9927067c51ff279d340d7321e4890dc2841c4a
+            - name: MINIO_URL
+              value: http://minio:9000
+            - name: MINIO_USER
+              value: your-access-key
+            - name: MINIO_PASSWORD
+              value: your-secret-key
+          volumeMounts:
+            - name: airflow-storage
+              mountPath: /opt/airflow
+            - name: dags
+              mountPath: /opt/airflow/dags
+      volumes:
+        - name: airflow-storage
+          persistentVolumeClaim:
+            claimName: airflow-pvc
+        - name: dags
+          hostPath:
+            path: /home/cc/eval-loop-chi/dags
+            type: DirectoryOrCreate
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: airflow-scheduler
+  namespace: nyc-vision-zero-platform
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: airflow-scheduler
+  template:
+    metadata:
+      labels:
+        app: airflow-scheduler
+    spec:
+      containers:
+        - name: airflow-scheduler
+          image: apache/airflow:2.9.3-python3.11
+          command: ["/bin/bash", "-c"]
+          args:
+            - "exec airflow scheduler"
+          env:
+            - name: AIRFLOW__CORE__EXECUTOR
+              value: LocalExecutor
+            - name: AIRFLOW__CORE__FERNET_KEY
+              value: wmSpjmCJ477jqpJE9BlzuzzI_Cw4P4RRGBZj1KeAPcU=
+            - name: AIRFLOW__DATABASE__SQL_ALCHEMY_CONN
+              value: postgresql+psycopg2://user:password@postgres/postgres
+            - name: AIRFLOW__CORE__LOAD_EXAMPLES
+              value: "False"
+            - name: LABEL_STUDIO_URL
+              value: http://label-studio:8080
+            - name: LABEL_STUDIO_USER_TOKEN
+              value: ab9927067c51ff279d340d7321e4890dc2841c4a
+            - name: MINIO_URL
+              value: http://minio:9000
+            - name: MINIO_USER
+              value: your-access-key
+            - name: MINIO_PASSWORD
+              value: your-secret-key
+          volumeMounts:
+            - name: airflow-storage
+              mountPath: /opt/airflow
+            - name: dags
+              mountPath: /opt/airflow/dags
+      volumes:
+        - name: airflow-storage
+          persistentVolumeClaim:
+            claimName: airflow-pvc
+        - name: dags
+          hostPath:
+            path: /home/cc/eval-loop-chi/dags
+            type: DirectoryOrCreate
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: airflow-setup
+  namespace: nyc-vision-zero-platform
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: airflow-setup
+  template:
+    metadata:
+      labels:
+        app: airflow-setup
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: airflow-setup
+          image: apache/airflow:2.9.3-python3.11
+          command: ["/bin/bash", "-c"]
+          args:
+            - |
+              airflow db migrate && \
+              airflow users create --username admin \
+                --firstname Airflow --lastname Admin --role Admin \
+                --email airflow@example.com --password airflow
+          env:
+            - name: AIRFLOW__CORE__EXECUTOR
+              value: LocalExecutor
+            - name: AIRFLOW__CORE__FERNET_KEY
+              value: wmSpjmCJ477jqpJE9BlzuzzI_Cw4P4RRGBZj1KeAPcU=
+            - name: AIRFLOW__DATABASE__SQL_ALCHEMY_CONN
+              value: postgresql+psycopg2://user:password@postgres/postgres
+            - name: AIRFLOW__CORE__LOAD_EXAMPLES
+              value: "False"
+          volumeMounts:
+            - name: airflow-storage
+              mountPath: /opt/airflow
+            - name: dags
+              mountPath: /opt/airflow/dags
+      volumes:
+        - name: airflow-storage
+          persistentVolumeClaim:
+            claimName: airflow-pvc
+        - name: dags
+          hostPath:
+            path: /home/cc/eval-loop-chi/dags
+            type: DirectoryOrCreate
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: airflow
+  namespace: nyc-vision-zero-platform
+spec:
+  selector:
+    app: airflow-webserver
+  ports:
+    - port: 8081
+      targetPort: 8080
+  externalIPs:
+    - {{ .Values.airflow.externalIP }}
