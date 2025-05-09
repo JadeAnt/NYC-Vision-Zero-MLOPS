@@ -6,102 +6,145 @@ spec:
   entrypoint: training-and-build
   arguments:
     parameters:
-    - name: endpoint-ip
+      - name: ray-head-ip
+      - name: mlflow-uri
 
   templates:
-  - name: training-and-build
-    steps:
-      - - name: trigger-training-endpoint
-          template: call-endpoint
-          arguments:
-            parameters:
-            - name: endpoint-ip
-              value: "{{workflow.parameters.endpoint-ip}}"
-      - - name: build-container
-          template: trigger-build
-          arguments:
-            parameters:
-            - name: model-version
-              value: "{{steps.trigger-training-endpoint.outputs.result}}"
-          when: "{{steps.trigger-training-endpoint.outputs.result}} != ''"
+    - name: training-and-build
+      steps:
+        - - name: submit-ray-job
+            template: submit-ray-job
+            arguments:
+              parameters:
+                - name: ray-head-ip
+                  value: '{{workflow.parameters.ray-head-ip}}'
+        - - name: poll-ray-job
+            template: poll-ray-job
+            arguments:
+              parameters:
+                - name: ray-head-ip
+                  value: '{{workflow.parameters.ray-head-ip}}'
+                - name: job-id
+                  value: '{{steps.submit-ray-job.outputs.result}}'
+        - - name: query-mlflow
+            template: query-mlflow
+            arguments:
+              parameters:
+                - name: mlflow-uri
+                  value: '{{workflow.parameters.mlflow-uri}}'
+                - name: model-name
+                  value: 'CrashModel'
+        - - name: build-container
+            template: trigger-build
+            arguments:
+              parameters:
+                - name: model-version
+                  value: '{{steps.query-mlflow.outputs.result}}'
+            when: "{{steps.query-mlflow.outputs.result}} != ''"
 
-  - name: call-endpoint
-    inputs:
-      parameters:
-      - name: endpoint-ip
-    script:
-      image: alpine:3.18
-      command: [sh]
-      source: |
+    - name: submit-ray-job
+      inputs:
+        parameters:
+          - name: ray-head-ip
+      script:
+        image: python:3.10-slim
+        command: [sh, -c]
+        source: |
+          set -e
 
-        MAX_RETRIES=5
-        RETRY_DELAY=3
-        i=1
-        INSTALL_SUCCESS=0
+          echo "[INFO] Installing Ray CLI..."
+          pip install --no-cache-dir "ray[default]"
 
-        set +e  # allow manual error handling
+          echo "[INFO] Submitting job via Ray CLI..."
+          JOB_ID=$(ray job submit \
+            --address http://{{inputs.parameters.ray-head-ip}}:8265 \
+            --working-dir /workspace \
+            --runtime-env='{
+              "pip": ["ray[train]", "ray[tune]","torch","mlflow","scikit-learn","joblib", "prefect"]
+            }' \
+            -- python /train/flow.py --epochs 10 \
+          | jq -r .job_id)
 
-        # Retry installation
-        while [ $i -le $MAX_RETRIES ]; do
-          echo "[INFO] Attempt $i to install curl and jq..." >&2
-          apk update > /dev/null 2>&1
-          apk add --no-cache curl jq > /dev/null 2>&1
-          STATUS=$?
-          if [ $STATUS -eq 0 ]; then
-            echo "[INFO] Packages installed successfully." >&2
-            INSTALL_SUCCESS=1
-            break
+          if [ -z "$JOB_ID" ] || [ "$JOB_ID" = "null" ]; then
+            echo "[ERROR] Ray CLI failed to return a job_id" >&2
+            exit 1
           fi
-          echo "[WARN] apk add failed (exit $STATUS). Retrying in $RETRY_DELAY seconds..." >&2
-          sleep $RETRY_DELAY
-          i=$((i + 1))
-        done
 
-        set -e  # return to fail-fast mode
+          echo "$JOB_ID"
 
-        if [ $INSTALL_SUCCESS -ne 1 ]; then
-          echo "[ERROR] Failed to install curl and jq after $MAX_RETRIES attempts." >&2
+    - name: poll-ray-job
+      inputs:
+        parameters:
+          - name: ray-head-ip
+          - name: job-id
+      script:
+        image: curlimages/curl:8.2.1
+        command: [sh, -c]
+        source: |
+          MAX_RETRIES=60
+          SLEEP=10
+          i=0
+
+          while [ $i -lt $MAX_RETRIES ]; do
+            STATUS=$(curl -s \
+              http://{{inputs.parameters.ray-head-ip}}:8265/api/jobs/{{inputs.parameters.job-id}} \
+              | jq -r .status.state)
+
+            echo "[INFO] Ray job status: $STATUS" >&2
+            if [ "$STATUS" = "SUCCEEDED" ]; then
+              exit 0
+            elif [ "$STATUS" = "FAILED" ]; then
+              echo "ERROR: Ray job failed" >&2
+              exit 1
+            fi
+
+            i=$((i+1))
+            sleep $SLEEP
+          done
+
+          echo "ERROR: Ray job did not complete after $((MAX_RETRIES * SLEEP)) seconds" >&2
           exit 1
-        fi
 
-        # Trigger model training
-        echo "[INFO] Triggering model training..." >&2
-        RESPONSE=$(curl -f -s -X POST http://{{inputs.parameters.endpoint-ip}}:9090/trigger-training)
-        CURL_EXIT_CODE=$?
+    - name: query-mlflow
+      inputs:
+        parameters:
+          - name: mlflow-uri
+          - name: model-name
+      script:
+        image: curlimages/curl:8.2.1
+        command: [sh, -c]
+        source: |
+          # Query MLflow Model Registry for the latest version of this model
+          # Using the MLflow 2.0 REST API:
+          RESPONSE=$(curl -s -X POST \
+            {{inputs.parameters.mlflow-uri}}/api/2.0/mlflow/model-versions/search \
+            -H "Content-Type: application/json" \
+            -d "{\"filter\": \"name='${{inputs.parameters.model-name}}'\", \"page_size\":1}")
 
-        echo "[INFO] Training endpoint response was: $RESPONSE" >&2
+          VERSION=$(echo "$RESPONSE" | jq -r '.model_versions[0].version // empty')
 
+          if [ -z "$VERSION" ]; then
+            echo "ERROR: could not find model version in MLflow registry" >&2
+            exit 1
+          fi
 
-        if [ $CURL_EXIT_CODE -ne 0 ]; then
-          echo "[ERROR] curl failed with code $CURL_EXIT_CODE" >&2
-          exit $CURL_EXIT_CODE
-        fi
+          echo -n "$VERSION"
 
-        # Extract model version
-        VERSION=$(echo "$RESPONSE" | jq -r '.new_model_version // empty')
-
-        if [ -z "$VERSION" ]; then
-          echo "[WARN] 'new_model_version' not found in response." >&2
-          exit 1
-        fi
-
-        echo -n "$VERSION"
-
-  - name: trigger-build
-    inputs:
-      parameters:
-      - name: model-version
-    resource:
-      action: create
-      manifest: |
-        apiVersion: argoproj.io/v1alpha1
-        kind: Workflow
-        metadata:
-          generateName: build-container-image-
-        spec:
-          workflowTemplateRef:
-            name: build-container-image
-          arguments:
-            parameters:
-            - name: model-version
-              value: "{{inputs.parameters.model-version}}"
+    - name: trigger-build
+      inputs:
+        parameters:
+          - name: model-version
+      resource:
+        action: create
+        manifest: |
+          apiVersion: argoproj.io/v1alpha1
+          kind: Workflow
+          metadata:
+            generateName: build-container-image-
+          spec:
+            workflowTemplateRef:
+              name: build-container-image
+            arguments:
+              parameters:
+                - name: model-version
+                  value: "{{inputs.parameters.model-version}}"
