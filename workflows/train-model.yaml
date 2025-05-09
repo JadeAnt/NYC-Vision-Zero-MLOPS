@@ -74,9 +74,6 @@ spec:
           - name: ray-head-ip
       script:
         image: python:3.10-slim
-        volumeMounts:
-          - name: repo-volume
-            mountPath: /mnt/repo-volume
         command: [sh]      # changed [sh, -c] to [sh]  
         source: |
           set -e
@@ -102,6 +99,9 @@ spec:
 
 
           echo "$JOB_ID"
+        volumeMounts:
+          - name: repo-volume
+            mountPath: /mnt/repo-volume
 
     - name: poll-ray-job
       inputs:
