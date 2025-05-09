@@ -58,11 +58,10 @@ spec:
           echo "[INFO] Submitting job via Ray CLI..."
           JOB_ID=$(ray job submit \
             --address http://{{inputs.parameters.ray-head-ip}}:8265 \
-            --working-dir /train \
             --runtime-env-json='{
               "pip": ["ray[train]", "ray[tune]","torch","mlflow","scikit-learn","joblib", "prefect"]
             }' \
-            -- python flow.py --epochs 10 \
+            -- python /train/flow.py \
           | jq -r .job_id)
 
           if [ -z "$JOB_ID" ] || [ "$JOB_ID" = "null" ]; then
