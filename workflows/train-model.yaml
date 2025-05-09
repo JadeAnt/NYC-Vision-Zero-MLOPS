@@ -58,11 +58,11 @@ spec:
           echo "[INFO] Submitting job via Ray CLI..."
           JOB_ID=$(ray job submit \
             --address http://{{inputs.parameters.ray-head-ip}}:8265 \
+            --working-dir . \
             --runtime-env-json='{
               "pip": ["ray[train]", "ray[tune]","torch","mlflow","scikit-learn","joblib", "prefect"]
             }' \
-            -- python /train/flow.py \
-          | jq -r .job_id)
+            -- python train/flow.py)
 
           if [ -z "$JOB_ID" ] || [ "$JOB_ID" = "null" ]; then
             echo "[ERROR] Ray CLI failed to return a job_id" >&2
@@ -86,8 +86,7 @@ spec:
 
           while [ $i -lt $MAX_RETRIES ]; do
             STATUS=$(curl -s \
-              http://{{inputs.parameters.ray-head-ip}}:8265/api/jobs/{{inputs.parameters.job-id}} \
-              | jq -r .status.state)
+              http://{{inputs.parameters.ray-head-ip}}:8265/api/jobs/{{inputs.parameters.job-id}})
 
             echo "[INFO] Ray job status: $STATUS" >&2
             if [ "$STATUS" = "SUCCEEDED" ]; then
@@ -120,7 +119,7 @@ spec:
             -H "Content-Type: application/json" \
             -d "{\"filter\": \"name='${{inputs.parameters.model-name}}'\", \"page_size\":1}")
 
-          VERSION=$(echo "$RESPONSE" | jq -r '.model_versions[0].version // empty')
+          VERSION=$(echo "$RESPONSE")
 
           if [ -z "$VERSION" ]; then
             echo "ERROR: could not find model version in MLflow registry" >&2
