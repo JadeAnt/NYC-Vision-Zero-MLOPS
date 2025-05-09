@@ -117,7 +117,7 @@ spec:
           RESPONSE=$(curl -s -X POST \
             {{inputs.parameters.mlflow-uri}}/api/2.0/mlflow/model-versions/search \
             -H "Content-Type: application/json" \
-            -d "{\"filter\": \"name='${{inputs.parameters.model-name}}'\", \"page_size\":1}")
+            -d "{\"filter\": \"name='{{inputs.parameters.model-name}}'\", \"page_size\":1}")
 
           VERSION=$(echo "$RESPONSE")
 
