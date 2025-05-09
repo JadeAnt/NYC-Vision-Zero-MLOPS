@@ -36,11 +36,10 @@ spec:
             - containerPort: 8265 # dashboard
             - containerPort: 6379 # redis
             - containerPort: 9090 # prometheus metrics
-            - containerPort: 8266 # for training api
           command: ['/bin/sh', '-c']
           args:
             - |
-              ray start --head --port=6379 --dashboard-host=0.0.0.0 --dashboard-port=8265 --rest-api-port=8266 --metrics-export-port=9090 --block
+              ray start --head --port=6379 --dashboard-host=0.0.0.0 --dashboard-port=8265 --metrics-export-port=9090 --block
           volumeMounts: #added volumes to stop warning
             - mountPath: /dev/shm
               name: dshm
@@ -110,8 +109,5 @@ spec:
     - name: metrics
       port: 9090
       targetPort: 9090
-    - name: rest
-      port: 8266
-      targetPort: 8266
   externalIPs:
     - {{ .Values.ray.externalIP }}
