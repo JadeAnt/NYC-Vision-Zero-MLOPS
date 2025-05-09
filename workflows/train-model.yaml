@@ -58,7 +58,12 @@ spec:
         command: [sh]
         source: |
           set -e
+          rm -rm /mnt/repo-volume/repo
+          
           git clone --branch main "https://github.com/JadeAnt/NYC-Vision-Zero-MLOPS.git" /mnt/repo-volume/repo
+          
+          echo "[INFO] Contents of repo directory:"
+          ls /mnt/repo-volume/repo
       volumeMounts:
         - name: repo-volume
           mountPath: /mnt/repo-volume
@@ -69,13 +74,12 @@ spec:
           - name: ray-head-ip
       script:
         image: python:3.10-slim
+        volumeMounts:
+          - name: repo-volume
+            mountPath: /mnt/repo-volume
         command: [sh]      # changed [sh, -c] to [sh]  
         source: |
           set -e
-          
-          echo "[INFO] Contents of repo directory:"
-          
-          ls /mnt/repo-volume/repo
           
           echo "[INFO] Installing Ray CLI..."
 
@@ -98,9 +102,6 @@ spec:
 
 
           echo "$JOB_ID"
-      volumeMounts:
-        - name: repo-volume
-          mountPath: /mnt/repo-volume
 
     - name: poll-ray-job
       inputs:
