@@ -7,6 +7,7 @@ spec:
     storage: 5Gi
   accessModes:
     - ReadWriteOnce
+  storageClassName: ""
   persistentVolumeReclaimPolicy: Retain
   hostPath:
     path: /mnt/block/grafana_data
@@ -21,6 +22,7 @@ metadata:
 spec:
   accessModes:
     - ReadWriteOnce
+  storageClassName: ""
   resources:
     requests:
       storage: 5Gi  # Size of persistent storage
