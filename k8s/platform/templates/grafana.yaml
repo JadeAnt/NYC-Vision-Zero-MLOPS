@@ -11,6 +11,7 @@ spec:
   hostPath:
     path: /mnt/block/grafana_data
     type: DirectoryOrCreate
+---
 # Persistent volume claim for Grafana dashboards and configuration
 apiVersion: v1
 kind: PersistentVolumeClaim
