@@ -58,7 +58,7 @@ spec:
         command: [sh]
         source: |
           set -e
-          rm -rm /mnt/repo-volume/repo
+          rm -rf /mnt/repo-volume/repo
           
           git clone --branch main "https://github.com/JadeAnt/NYC-Vision-Zero-MLOPS.git" /mnt/repo-volume/repo
           
