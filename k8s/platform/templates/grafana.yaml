@@ -44,9 +44,13 @@ spec:
       labels:
         app: grafana
     spec:
+      securityContext:
+        fsGroup: 1000
       containers:
         - name: grafana
           image: grafana/grafana:latest
+          securityContext:
+            runAsUser: 1000 
           ports:
             - containerPort: 3000  # Grafana web UI port
           env:
