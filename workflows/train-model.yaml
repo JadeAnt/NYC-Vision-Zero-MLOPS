@@ -58,10 +58,10 @@ spec:
         command: [sh]
         source: |
           set -e
-          git clone --branch main "https://github.com/JadeAnt/NYC-Vision-Zero-MLOPS.git" /repo
+          git clone --branch main "https://github.com/JadeAnt/NYC-Vision-Zero-MLOPS.git" /mnt/repo-volume/repo
       volumeMounts:
         - name: repo-volume
-          mountPath: /repo
+          mountPath: /mnt/repo-volume
 
     - name: submit-ray-job
       inputs:
@@ -81,11 +81,11 @@ spec:
 
           JOB_ID=$(ray job submit \
             --address http://{{inputs.parameters.ray-head-ip}}:8265 \
-            --working-dir ./repo \
-            --runtime_env={
-              "pip": ["ray[train]", "ray[tune]","torch","mlflow","scikit-learn","joblib", "prefect"] \
-            }  \
-            -- python train/flow.py --epochs 10)
+            --working-dir /mnt/repo-volume/repo \
+            --runtime-env-json='{
+              "pip": ["ray[train]", "ray[tune]","torch","mlflow","scikit-learn","joblib", "prefect"]
+              }'  \
+            -- python /train/flow.py --epochs 10)
 
           if [ -z "$JOB_ID" ] || [ "$JOB_ID" = "null" ]; then
             echo "[ERROR] Ray CLI failed to return a job_id" >&2
@@ -96,7 +96,7 @@ spec:
           echo "$JOB_ID"
       volumeMounts:
         - name: repo-volume
-          mountPath: /repo
+          mountPath: /mnt/repo-volume
 
     - name: poll-ray-job
       inputs:
