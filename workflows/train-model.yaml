@@ -4,6 +4,14 @@ metadata:
   name: train-model
 spec:
   entrypoint: training-and-build
+  volumeClaimTemplates:
+    - metadata:
+        name: repo-volume
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 1Gi
   arguments:
     parameters:
       - name: ray-head-ip
@@ -12,6 +20,8 @@ spec:
   templates:
     - name: training-and-build
       steps:
+        - - name: clone-repo
+            template: clone-repo
         - - name: submit-ray-job
             template: submit-ray-job
             arguments:
@@ -42,6 +52,17 @@ spec:
                   value: '{{steps.query-mlflow.outputs.result}}'
             when: "{{steps.query-mlflow.outputs.result}} != ''"
 
+    - name: clone-repo
+      script:
+        image: alpine/git
+        command: [sh]
+        source: |
+          set -e
+          git clone --branch main "https://github.com/JadeAnt/NYC-Vision-Zero-MLOPS.git" /repo
+      volumeMounts:
+        - name: repo-volume
+          mountPath: /repo
+
     - name: submit-ray-job
       inputs:
         parameters:
@@ -53,21 +74,33 @@ spec:
           set -e
 
           echo "[INFO] Installing Ray CLI..."
-          pip install --no-cache-dir "ray[default]"
+
+          pip install --no-cache-dir "ray[default]" 
+
+          echo "[INFO] Cloning Git Repository"
+
+          git clone "https://github.com/JadeAnt/NYC-Vision-Zero-MLOPS.git"
 
           echo "[INFO] Submitting job via Ray CLI..."
+
           JOB_ID=$(ray job submit \
             --address http://{{inputs.parameters.ray-head-ip}}:8265 \
             --working-dir . \
-            --runtime-env-json='{"pip": ["ray[train]", "ray[tune]","torch","mlflow","scikit-learn","joblib", "prefect"]}' \
-            -- python train/flow.py)
+            --runtime_env={
+              "pip": ["ray[train]", "ray[tune]","torch","mlflow","scikit-learn","joblib", "prefect"]
+            }  \
+            -- python ./train/flow.py --epochs 10)
 
           if [ -z "$JOB_ID" ] || [ "$JOB_ID" = "null" ]; then
             echo "[ERROR] Ray CLI failed to return a job_id" >&2
             exit 1
           fi
 
+
           echo "$JOB_ID"
+      volumeMounts:
+        - name: repo-volume
+          mountPath: /repo
 
     - name: poll-ray-job
       inputs:
