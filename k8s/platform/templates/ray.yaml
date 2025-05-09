@@ -1,0 +1,56 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ray-head
+  namespace: nyc-vision-zero-platform
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ray
+      role: head
+  template:
+    metadata:
+      labels:
+        app: ray
+        role: head
+    spec:
+      containers:
+        - name: ray-head
+          image: rayproject/ray:latest
+          ports:
+            - containerPort: 8265 # dashboard
+            - containerPort: 6379 # redis
+          command: ['/bin/sh', '-c']
+          args:
+            - |
+              ray start --head --port=6379 --dashboard-host=0.0.0.0 --dashboard-port=8265
+          volumeMounts: #added volumes to stop warning
+            - mountPath: /dev/shm
+              name: dshm
+      volumes:
+        - name: dshm
+          emptyDir:
+            medium: Memory
+            sizeLimit: 1Gi
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ray-head
+  namespace: nyc-vision-zero-platform
+spec:
+  selector:
+    app: ray
+    role: head
+  ports:
+    - name: dashboard
+      port: 8265
+      targetPort: 8265
+    - name: redis
+      port: 6379
+      targetPort: 6379
+  externalIPs:
+    - { { .Values.ray.externalIP } }
