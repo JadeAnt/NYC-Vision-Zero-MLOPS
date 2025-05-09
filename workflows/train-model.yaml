@@ -59,9 +59,7 @@ spec:
           JOB_ID=$(ray job submit \
             --address http://{{inputs.parameters.ray-head-ip}}:8265 \
             --working-dir . \
-            --runtime-env-json='{
-              "pip": ["ray[train]", "ray[tune]","torch","mlflow","scikit-learn","joblib", "prefect"]
-            }' \
+            --runtime-env-json='{"pip": ["ray[train]", "ray[tune]","torch","mlflow","scikit-learn","joblib", "prefect"]}' \
             -- python train/flow.py)
 
           if [ -z "$JOB_ID" ] || [ "$JOB_ID" = "null" ]; then
