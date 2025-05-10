@@ -122,9 +122,8 @@ spec:
                 raise RuntimeError("No model versions found")
             
             version = data["model_versions"][0]["version"]
-
-            echo "$version" > /tmp/model_version.txt
             EOF
+            echo "$version" > /tmp/model_version.txt
       outputs:
         parameters:
           - name: result
