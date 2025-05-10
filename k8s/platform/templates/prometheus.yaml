@@ -1,3 +1,18 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: prometheus-pv
+spec:
+  capacity:
+    storage: 5Gi
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: ""
+  persistentVolumeReclaimPolicy: Retain
+  hostPath:
+    path: /mnt/block/prometheus-data
+    type: DirectoryOrCreate
+---
 # Persistent storage claim for Prometheus data
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -5,6 +20,8 @@ metadata:
   name: prometheus-pvc
   namespace: nyc-vision-zero-platform
 spec:
+  storageClassName: ""
+  volumeName: prometheus-pv
   accessModes:
     - ReadWriteOnce  # Only one node can mount this volume at a time (sufficient for single replica)
   resources:
