@@ -18,6 +18,9 @@ services:
       - -c
       - |
         set -euo pipefail
+
+        echo "Installing wget…"
+        apt-get update && apt-get install -y wget
         
         echo 'Resetting dataset directory …'
         rm -rf nyc-crashes
