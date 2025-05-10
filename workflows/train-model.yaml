@@ -136,6 +136,7 @@ spec:
           kind: Workflow
           metadata:
             generateName: build-container-image-
+            namespace: argo
           spec:
             workflowTemplateRef:
               name: build-container-image
