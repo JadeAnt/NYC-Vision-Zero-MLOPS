@@ -1,15 +1,33 @@
 ---
 apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: postgres-pv
+  namespace: nyc-vision-zero-platform
+spec:
+  capacity:
+    storage: 5Gi
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: ""               
+  persistentVolumeReclaimPolicy: Retain
+  hostPath:
+    path: /mnt/block/postgres-data    
+    type: DirectoryOrCreate
+---
+apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: postgres-pvc
   namespace: nyc-vision-zero-platform
 spec:
+  storageClassName: ""        
   accessModes:
     - ReadWriteOnce
   resources:
     requests:
       storage: 5Gi
+  volumeName: postgres-pv 
 ---
 apiVersion: apps/v1
 kind: Deployment
