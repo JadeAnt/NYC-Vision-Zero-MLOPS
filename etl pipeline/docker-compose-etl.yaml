@@ -15,7 +15,6 @@ services:
     volumes:
       - nyc-crashes:/data
     working_dir: /data
-    entrypoint: [ "bash", "-c" ]
     command: |
       set -euo pipefail
 
