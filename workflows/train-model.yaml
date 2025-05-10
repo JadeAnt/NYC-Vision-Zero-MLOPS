@@ -59,6 +59,15 @@ spec:
         command: [sh]      # changed [sh, -c] to [sh]  
         source: |
           set -e
+
+          
+          echo "[INFO] Install git"
+
+          apt-get update && \
+          apt-get install -y git && \
+          apt-get clean
+          
+          echo "[INFO] Git Clone"
           rm -rf /mnt/repo-volume/repo
           
           git clone --branch main "https://github.com/JadeAnt/NYC-Vision-Zero-MLOPS.git" /mnt/repo-volume/repo
