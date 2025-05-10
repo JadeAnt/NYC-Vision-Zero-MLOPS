@@ -1,52 +1,56 @@
 import os
-import time
 import joblib
 import mlflow
 import ray
-from ray.train.sklearn import SklearnTrainer
-from ray.train import ScalingConfig, Checkpoint
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.datasets import load_iris
+from sklearn.model_selection import train_test_split
+from ray.util.joblib import register_ray
 from mlflow.tracking import MlflowClient
+
 
 MODEL_PATH = "crash_model.joblib"
 MODEL_NAME = "CrashModel"
 
-def train_loop(config):
-    time.sleep(5)
-
-    model = joblib.load(MODEL_PATH)
-
-    print(model.__getstate__())
-
-    # Dummy metrics
-    accuracy = 0.85
-    loss = 0.35
-
-    # Save the model to checkpoint
-    checkpoint = Checkpoint.from_dict({"model": model})
-    ray.train.report({"accuracy": accuracy, "loss": loss}, checkpoint=checkpoint)
-
 def main():
+# Initialize Ray
     ray.init()
 
-    trainer = SklearnTrainer(
-        train_loop_per_worker=train_loop,
-        scaling_config=ScalingConfig(num_workers=1, use_gpu=False),
-    )
+    # Register Ray with joblib
+    register_ray()
 
-    result = trainer.fit()
+    # Load dataset
+    X, y = load_iris(return_X_y=True)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
 
-    model = result.checkpoint.to_dict()["model"]
-    metrics = result.metrics
-    accuracy = metrics.get("accuracy", 0.0)
-    loss = metrics.get("loss", 1.0)
+    # Enable MLflow autologging for scikit-learn
+    mlflow.sklearn.autolog()
 
+    print("Testing loading our model")
+
+    model = joblib.load(open(MODEL_PATH, "rb"))
+    print(model.__getstate__)
+
+    print("Training other model")
+
+    # Start an MLflow run
     with mlflow.start_run() as run:
+        # Train model with Ray's joblib backend
+        with joblib.parallel_backend('ray'):
+            model = RandomForestClassifier(n_estimators=100)
+            model.fit(X_train, y_train)
+
+        # Evaluate model
+        accuracy = model.score(X_test, y_test)
+        loss = 1 - accuracy  # Simplified loss
+
+        # Log additional metrics
         mlflow.log_metric("accuracy", accuracy)
         mlflow.log_metric("loss", loss)
-        mlflow.sklearn.log_model(model, artifact_path="model")
 
         print(f"[INFO] Logged model to MLflow run: {run.info.run_id}")
 
+        # Register model if accuracy meets threshold
         if accuracy >= 0.80:
             client = MlflowClient()
             model_uri = f"runs:/{run.info.run_id}/model"
