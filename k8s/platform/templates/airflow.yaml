@@ -140,7 +140,7 @@ spec:
       labels:
         app: airflow-setup
     spec:
-      restartPolicy: Never
+      restartPolicy: Always
       containers:
         - name: airflow-setup
           image: apache/airflow:2.9.3-python3.11
