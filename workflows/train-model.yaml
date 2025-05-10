@@ -26,14 +26,6 @@ spec:
               parameters:
                 - name: ray-head-ip
                   value: '{{workflow.parameters.ray-head-ip}}'
-        - - name: poll-ray-job
-            template: poll-ray-job
-            arguments:
-              parameters:
-                - name: ray-head-ip
-                  value: '{{workflow.parameters.ray-head-ip}}'
-                - name: job-id
-                  value: '{{steps.submit-ray-job.outputs.result}}'
         - - name: query-mlflow
             template: query-mlflow
             arguments:
