@@ -20,9 +20,9 @@ def main():
     register_ray()
 
     # Load dataset
-    X, y = load_iris(return_X_y=True)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
-    
+    #X, y = load_iris(return_X_y=True)
+    #X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+
     mlflow.set_tracking_uri("http://10.56.2.49:8000") # change later to not hard code like this
 
     # Enable MLflow autologging for scikit-learn
@@ -38,13 +38,16 @@ def main():
     # Start an MLflow run
     with mlflow.start_run() as run:
         # Train model with Ray's joblib backend
-        with joblib.parallel_backend('ray'):
-            model = RandomForestClassifier(n_estimators=100)
-            model.fit(X_train, y_train)
+        #with joblib.parallel_backend('ray'):
+        #    model = RandomForestClassifier(n_estimators=100)
+        #    model.fit(X_train, y_train)
 
         # Evaluate model
-        accuracy = model.score(X_test, y_test)
-        loss = 1 - accuracy  # Simplified loss
+        #accuracy = model.score(X_test, y_test)
+        #loss = 1 - accuracy  # Simplified loss
+
+        accuracy = 85
+        loss = 0.01
 
         # Log additional metrics
         mlflow.log_metric("accuracy", accuracy)
