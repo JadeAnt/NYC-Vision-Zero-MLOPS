@@ -20,8 +20,6 @@ spec:
   templates:
     - name: training-and-build
       steps:
-        - - name: clone-repo
-            template: clone-repo
         - - name: submit-ray-job
             template: submit-ray-job
             arguments:
@@ -52,22 +50,6 @@ spec:
                   value: '{{steps.query-mlflow.outputs.result}}'
             when: "{{steps.query-mlflow.outputs.result}} != ''"
 
-    - name: clone-repo
-      script:
-        image: alpine/git
-        command: [sh]
-        source: |
-          set -e
-          rm -rf /mnt/repo-volume/repo
-          
-          git clone --branch main "https://github.com/JadeAnt/NYC-Vision-Zero-MLOPS.git" /mnt/repo-volume/repo
-          
-          echo "[INFO] Contents of repo directory:"
-          ls /mnt/repo-volume/repo
-      volumeMounts:
-        - name: repo-volume
-          mountPath: /mnt/repo-volume
-
     - name: submit-ray-job
       inputs:
         parameters:
@@ -77,7 +59,13 @@ spec:
         command: [sh]      # changed [sh, -c] to [sh]  
         source: |
           set -e
+          rm -rf /mnt/repo-volume/repo
           
+          git clone --branch main "https://github.com/JadeAnt/NYC-Vision-Zero-MLOPS.git" /mnt/repo-volume/repo
+          
+          echo "[INFO] Contents of repo directory:"
+          
+          ls /mnt/repo-volume/repo
           echo "[INFO] Installing Ray CLI..."
 
           pip install --no-cache-dir "ray[default]" 
