@@ -68,7 +68,7 @@ spec:
             claimName: airflow-pvc
         - name: dags
           hostPath:
-            path: /home/cc/eval-loop-chi/dags
+            path: /mnt/block/airflow/dags
             type: DirectoryOrCreate
 ---
 apiVersion: apps/v1
@@ -122,7 +122,7 @@ spec:
             claimName: airflow-pvc
         - name: dags
           hostPath:
-            path: /home/cc/eval-loop-chi/dags
+            path: /mnt/block/airflow/dags
             type: DirectoryOrCreate
 ---
 apiVersion: apps/v1
@@ -171,7 +171,7 @@ spec:
             claimName: airflow-pvc
         - name: dags
           hostPath:
-            path: /home/cc/eval-loop-chi/dags
+            path: /mnt/block/airflow/dags             # replaced /home/cc/eval-loop-chi/dags
             type: DirectoryOrCreate
 ---
 apiVersion: v1
