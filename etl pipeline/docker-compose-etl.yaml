@@ -4,23 +4,21 @@ volumes:
   nyc-crashes:
 
 services:
-
-  # ──────────────────────────────────────────────────────────────────
-  # 1) Extract stage – download raw CSV into the shared volume
-  # ──────────────────────────────────────────────────────────────────
+  # ───────────────────────────  Extract stage ────────────────────────────
   extract-data:
-    image: python:3.11-slim          # Debian slim → tiny, but no curl by default
+    image: python:3.11-slim
     container_name: etl_extract_data
     user: root
     volumes:
       - nyc-crashes:/data
     working_dir: /data
+    entrypoint: [ "/bin/bash", "-c" ]
     command: |
       set -euo pipefail
 
       echo 'Installing curl …'
-      apt-get update -qq && \
-      apt-get install -y --no-install-recommends curl ca-certificates && \
+      apt-get update -qq
+      apt-get install -y --no-install-recommends curl ca-certificates
       rm -rf /var/lib/apt/lists/*
 
       echo 'Resetting dataset directory …'
@@ -35,9 +33,7 @@ services:
       echo 'Extract stage complete. Contents of /data:'
       ls -l /data
 
-  # ──────────────────────────────────────────────────────────────────
-  # 2) Transform stage – clean, aggregate, write per-year outputs
-  # ──────────────────────────────────────────────────────────────────
+  # ─────────────────────────── Transform stage ──────────────────────────
   transform-data:
     image: python:3.11-slim
     container_name: etl_transform_data
@@ -48,122 +44,108 @@ services:
     volumes:
       - nyc-crashes:/data
     working_dir: /data/nyc-crashes
+    entrypoint: [ "/bin/bash", "-c" ]
     command: |
-      #!/usr/bin/env bash
       set -euo pipefail
 
       echo 'Installing Python dependencies …'
       pip install --no-cache-dir pandas numpy
 
-      python - <<'PYCODE'
-      import os
-      import pandas as pd
-      from concurrent.futures import ProcessPoolExecutor, as_completed
-      import multiprocessing
+      python3 - <<'EOF'
+import os
+import pandas as pd
+from concurrent.futures import ProcessPoolExecutor, as_completed
+import multiprocessing
+from datetime import datetime
 
-      # 1) Load CSV
-      print('Loading raw CSV …')
-      df = pd.read_csv('collisions.csv', low_memory=False)
-      print(f'  → {len(df):,} rows, {df.shape[1]:,} columns')
+print('Loading CSV …')
+df = pd.read_csv('collisions.csv', low_memory=False)
+print(f'→ {len(df):,} rows, {df.shape[1]:,} columns')
 
-      # 2) Basic cleaning
-      print('Building final_df …')
-      final_df = (
-          df
-          .dropna(subset=['ON STREET NAME', 'CROSS STREET NAME'])
-          .assign(
-              intersection_id=lambda d:
-                  d['ON STREET NAME'].str.strip() + '_' + d['CROSS STREET NAME'].str.strip(),
-              CRASH_DATE=lambda d:
-                  pd.to_datetime(d['CRASH DATE'], errors='coerce')
-          )
-          .dropna(subset=['CRASH_DATE'])
-          .loc[:, ['CRASH_DATE', 'intersection_id']]
-          .reset_index(drop=True)
-      )
-      print(f'  → final_df has {len(final_df):,} rows')
+print('Basic cleaning …')
+final_df = (
+    df
+    .dropna(subset=['ON STREET NAME', 'CROSS STREET NAME'])
+    .assign(
+        intersection_id=lambda d:
+            d['ON STREET NAME'].str.strip() + '_' + d['CROSS STREET NAME'].str.strip(),
+        CRASH_DATE=lambda d:
+            pd.to_datetime(d['CRASH DATE'], errors='coerce')
+    )
+    .dropna(subset=['CRASH_DATE'])
+    .loc[:, ['CRASH_DATE', 'intersection_id']]
+    .reset_index(drop=True)
+)
+print(f'→ final_df has {len(final_df):,} rows')
 
-      # 3) Group into NumPy arrays for speed & small pickles
-      print('Grouping by intersection …')
-      grouped = (
-          final_df
-          .groupby('intersection_id')['CRASH_DATE']
-          .apply(lambda s: s.sort_values().to_numpy("datetime64[ns]"))
-          .to_dict()
-      )
-      print(f'  → built {len(grouped):,} groups')
+print('Grouping by intersection …')
+grouped = (
+    final_df
+    .groupby('intersection_id')['CRASH_DATE']
+    .apply(lambda s: s.sort_values().to_numpy("datetime64[ns]"))
+    .to_dict()
+)
+print(f'→ built {len(grouped):,} groups')
 
-      # 4) Snapshot dates (1 Jan every year with 5 y history & 6 m future)
-      print('Computing snapshot dates …')
-      start_date = final_df['CRASH_DATE'].min() + pd.DateOffset(years=5)
-      end_date   = final_df['CRASH_DATE'].max() - pd.DateOffset(months=6)
-      yearly_dates = pd.date_range(start=start_date, end=end_date, freq='YS')
-      print(f'  → snapshots from {start_date.date()} to {end_date.date()} '
-            f'({len(yearly_dates)} dates)')
+start_date = final_df['CRASH_DATE'].min() + pd.DateOffset(years=5)
+end_date   = final_df['CRASH_DATE'].max() - pd.DateOffset(months=6)
+yearly_dates = pd.date_range(start=start_date, end=end_date, freq='YS')
+OFF_6M, OFF_1Y, OFF_5Y = (
+    pd.DateOffset(months=6),
+    pd.DateOffset(years=1),
+    pd.DateOffset(years=5),
+)
 
-      OFF_6M, OFF_1Y, OFF_5Y = (
-          pd.DateOffset(months=6),
-          pd.DateOffset(years=1),
-          pd.DateOffset(years=5),
-      )
+def process_intersection(item):
+    iid, crashes = item
+    recs = []
+    for ts in yearly_dates:
+        past_6m = ((ts - OFF_6M) <= crashes) & (crashes < ts)
+        past_1y = ((ts - OFF_1Y) <= crashes) & (crashes < ts)
+        past_5y = ((ts - OFF_5Y) <= crashes) & (crashes < ts)
+        fut_6m  = (ts <= crashes) & (crashes < ts + OFF_6M)
 
-      def process_intersection(item):
-          iid, crashes = item
-          recs = []
-          for ts in yearly_dates:
-              past_6m = ((ts - OFF_6M) <= crashes) & (crashes < ts)
-              past_1y = ((ts - OFF_1Y) <= crashes) & (crashes < ts)
-              past_5y = ((ts - OFF_5Y) <= crashes) & (crashes < ts)
-              fut_6m  = (ts <= crashes) & (crashes < ts + OFF_6M)
+        cnt_fut = int(fut_6m.sum())
+        if cnt_fut == 0:
+            continue
 
-              cnt_fut = int(fut_6m.sum())
-              if cnt_fut == 0:
-                  continue
+        recs.append({
+            'prediction_time':     ts,
+            'intersection_id':     iid,
+            'accidents_6m':        int(past_6m.sum()),
+            'accidents_1y':        int(past_1y.sum()),
+            'accidents_5y':        int(past_5y.sum()),
+            'future_accidents_6m': cnt_fut,
+        })
+    return recs
 
-              recs.append({
-                  'prediction_time':     ts,
-                  'intersection_id':     iid,
-                  'accidents_6m':        int(past_6m.sum()),
-                  'accidents_1y':        int(past_1y.sum()),
-                  'accidents_5y':        int(past_5y.sum()),
-                  'future_accidents_6m': cnt_fut,
-              })
-          return recs
+print('Running parallel processing …')
+results = []
+with ProcessPoolExecutor(max_workers=multiprocessing.cpu_count()) as exe:
+    futures = [exe.submit(process_intersection, item) for item in grouped.items()]
+    for fut in as_completed(futures):
+        results.extend(fut.result())
 
-      # 5) Parallel execution
-      print('Running parallel processing …')
-      results = []
-      with ProcessPoolExecutor(max_workers=multiprocessing.cpu_count()) as exe:
-          futures = [exe.submit(process_intersection, item)
-                     for item in grouped.items()]
-          for fut in as_completed(futures):
-              results.extend(fut.result())
+processed_df = pd.DataFrame(results)
+print(f'→ processed_df has {len(processed_df):,} rows')
 
-      processed_df = pd.DataFrame(results)
-      print(f'  → processed_df has {len(processed_df):,} rows')
+print('Writing per‑year CSVs …')
+processed_df['YEAR'] = processed_df['prediction_time'].dt.year
+for yr, df_y in processed_df.groupby('YEAR'):
+    out_dir  = f'year_{yr}'
+    os.makedirs(out_dir, exist_ok=True)
+    df_y.to_csv(os.path.join(out_dir, f'processed_{yr}.csv'), index=False)
+    print(f'→ wrote {len(df_y):,} rows to year_{yr}/')
 
-      # 6) Write per-year CSVs
-      print('Writing per-year outputs …')
-      processed_df['YEAR'] = processed_df['prediction_time'].dt.year
-      for yr, df_y in processed_df.groupby('YEAR'):
-          out_dir  = f'year_{yr}'
-          out_file = os.path.join(out_dir, f'processed_{yr}.csv')
-          os.makedirs(out_dir, exist_ok=True)
-          df_y.to_csv(out_file, index=False)
-          print(f'  → wrote {len(df_y):,} rows to {out_file}')
-
-      # 7) Shrink the volume a bit
-      os.remove("collisions.csv")
-      PYCODE
+os.remove("collisions.csv")
+print('Transform complete.')
+EOF
 
       echo 'Transform stage complete. Directory listing:'
       ls -l /data/nyc-crashes
-      echo 'Year directories:'
       find /data/nyc-crashes -maxdepth 1 -type d -name 'year_*' | sort
 
-  # ──────────────────────────────────────────────────────────────────
-  # 3) Load stage – push year folders to remote via rclone
-  # ──────────────────────────────────────────────────────────────────
+  # ─────────────────────────── Load stage ────────────────────────────────
   load-data:
     image: rclone/rclone:latest
     container_name: etl_load_data
@@ -175,17 +157,17 @@ services:
       - nyc-crashes:/data
       - ${HOME}/.config/rclone/rclone.conf:/root/.config/rclone/rclone.conf:ro
     environment:
-      # Must be exported before `docker compose up`
       RCLONE_CONTAINER: ${RCLONE_CONTAINER}
-    entrypoint: /bin/bash
+    entrypoint: [ "/bin/bash", "-c" ]
     command: |
       set -euo pipefail
 
       if [ -z "${RCLONE_CONTAINER:-}" ]; then
-          echo 'ERROR: RCLONE_CONTAINER env var is not set'; exit 1
+        echo 'ERROR: RCLONE_CONTAINER env var is not set'
+        exit 1
       fi
 
-      echo 'Cleaning up existing contents of remote container …'
+      echo 'Cleaning remote container …'
       rclone delete chi_tacc:${RCLONE_CONTAINER} --rmdirs || true
 
       echo 'Uploading new data …'
