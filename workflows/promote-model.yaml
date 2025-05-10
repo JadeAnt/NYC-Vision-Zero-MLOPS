@@ -40,6 +40,10 @@ spec:
             - name: alias
               value: "{{workflow.parameters.target-environment}}"
 
+#      - - name: bring-up-edge-pi
+#          when: "{{workflow.parameters.source-environment}} == dev && {{workflow.parameters.target-environment}} == staging"
+#          template: bring-up-edge-pi
+
   - name: skopeo-retag
     inputs:
       parameters:
@@ -69,6 +73,21 @@ spec:
         pip install mlflow-skinny > /dev/null
         export MLFLOW_TRACKING_URI=http://mlflow.gourmetgram-platform.svc.cluster.local:8000
         python -c "import mlflow; client = mlflow.tracking.MlflowClient(); client.set_registered_model_alias(name='CrashModel', alias='{{inputs.parameters.alias}}', version='{{inputs.parameters.model-version}}')"
+
+#  - name: bring-up-edge-pi
+#    metadata:
+#      annotations:
+#        workflows.argoproj.io/kube-context: chi@edge
+#    script:
+#      image: python:3.11-slim
+#      command: [sh, -c]
+#      source: |
+#        echo "Checking for existing Raspberry Pi 5 reservation..."
+#        if 
+#          echo "Raspberry Pi 5 is already reserved. Skipping provisioning..."
+#          exit 0
+#        fi
+#        echo "No existing reservation found. Provisiong Raspberry Pi 5 on Chi@Edge..."      
 
   - name: trigger-deploy
     inputs:
