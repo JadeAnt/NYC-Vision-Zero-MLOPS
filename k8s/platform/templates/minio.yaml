@@ -1,4 +1,16 @@
-
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: minio-pv
+spec:
+  capacity:
+    storage: 5Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  hostPath:
+    path: /mnt/block/minio_data
+    type: DirectoryOrCreate
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -11,6 +23,7 @@ spec:
   resources:
     requests:
       storage: 5Gi
+  volumeName: minio-pv
 ---
 apiVersion: apps/v1
 kind: Deployment
