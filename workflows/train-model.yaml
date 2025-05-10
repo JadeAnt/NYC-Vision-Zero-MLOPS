@@ -77,9 +77,9 @@ spec:
             --address http://{{inputs.parameters.ray-head-ip}}:8265 \
             --working-dir /mnt/repo-volume/repo/train \
             --runtime-env-json='{
-              "pip": ["ray","ray[train]", "ray[tune]","mlflow","scikit-learn","joblib"]
+              "pip": ["ray","ray[train]", "ray[tune]","mlflow","scikit-learn","joblib","tune-sklearn", "pandas"]
               }'  \
-            -- python flow.py)
+            -- python train.py)
 
           if [ -z "$JOB_ID" ] || [ "$JOB_ID" = "null" ]; then
             echo "[ERROR] Ray CLI failed to return a job_id" >&2
