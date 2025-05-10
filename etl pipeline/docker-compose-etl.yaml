@@ -4,9 +4,8 @@ volumes:
   nyc-crashes:
 
 services:
-  # ──────────────────────────────────────────────────────────────────
-  # 1) Extract stage – download raw CSV into the shared volume
-  # ──────────────────────────────────────────────────────────────────
+
+  # ─────────────────────────────  Extract stage ────────────────────────────
   extract-data:
     image: python:3.11-slim          # Debian slim → tiny, but no curl by default
     container_name: etl_extract_data
@@ -15,86 +14,79 @@ services:
       - nyc-crashes:/data
     working_dir: /data
     command: |
-        #!/usr/bin/env bash
-        set -euo pipefail
+      #!/usr/bin/env bash
+      set -euo pipefail
 
-        echo 'Installing curl …'
-        apt-get update -qq        && \
-        apt-get install -y --no-install-recommends curl ca-certificates && \
-        rm -rf /var/lib/apt/lists/*
+      echo 'Installing curl …'
+      apt-get update -qq
+      apt-get install -y --no-install-recommends curl ca-certificates
+      rm -rf /var/lib/apt/lists/*
 
-        echo 'Resetting dataset directory …'
-        rm -rf nyc-crashes
-        mkdir -p nyc-crashes
-        cd nyc-crashes
+      echo 'Resetting dataset directory …'
+      rm -rf nyc-crashes
+      mkdir -p nyc-crashes
+      cd nyc-crashes
 
-        echo 'Downloading NYC collisions CSV …'
-        curl -L 'https://data.cityofnewyork.us/api/views/h9gi-nx95/rows.csv?accessType=DOWNLOAD' \
-             -o collisions.csv
+      echo 'Downloading NYC collisions CSV …'
+      curl -L 'https://data.cityofnewyork.us/api/views/h9gi-nx95/rows.csv?accessType=DOWNLOAD' \
+           -o collisions.csv
 
-        echo 'Extract stage complete. Contents of /data:'
-        ls -l /data
+      echo 'Extract stage complete. Contents of /data:'
+      ls -l /data
 
-
-  # ──────────────────────────────────────────────────────────────────
-  # 2) Transform stage – clean, aggregate, write per‑year outputs
-  # ──────────────────────────────────────────────────────────────────
+  # ─────────────────────────────  Transform stage ──────────────────────────
   transform-data:
     image: python:3.11-slim
     container_name: etl_transform_data
     user: root
     depends_on:
       extract-data:
-        condition: service_completed_successfully     # wait for download
+        condition: service_completed_successfully
     volumes:
       - nyc-crashes:/data
     working_dir: /data/nyc-crashes
     command: |
-        #!/usr/bin/env bash
-        set -euo pipefail
+      #!/usr/bin/env bash
+      set -euo pipefail
 
-        echo 'Installing Python dependencies …'
-        pip install --no-cache-dir pandas numpy
+      echo 'Installing Python dependencies …'
+      pip install --no-cache-dir pandas numpy
 
-        python - <<'PYCODE'
+      python - <<'PYCODE'
 import os
 import pandas as pd
 from concurrent.futures import ProcessPoolExecutor, as_completed
 import multiprocessing
 
-# 1) Load CSV
 print('Loading raw CSV …')
 df = pd.read_csv('collisions.csv', low_memory=False)
 print(f'  → {len(df):,} rows, {df.shape[1]:,} columns')
 
-# 2) Basic cleaning
 print('Building final_df …')
 final_df = (
     df
-      .dropna(subset=['ON STREET NAME', 'CROSS STREET NAME'])
-      .assign(
-          intersection_id=lambda d:
-              d['ON STREET NAME'].str.strip() + '_' + d['CROSS STREET NAME'].str.strip(),
-          CRASH_DATE=lambda d:
-              pd.to_datetime(d['CRASH DATE'], errors='coerce')
-      )
-      .dropna(subset=['CRASH_DATE'])    # throw away rows that failed date parse
-      .loc[:, ['CRASH_DATE', 'intersection_id']]
-      .reset_index(drop=True)
+    .dropna(subset=['ON STREET NAME', 'CROSS STREET NAME'])
+    .assign(
+        intersection_id=lambda d:
+            d['ON STREET NAME'].str.strip() + '_' + d['CROSS STREET NAME'].str.strip(),
+        CRASH_DATE=lambda d:
+            pd.to_datetime(d['CRASH DATE'], errors='coerce')
+    )
+    .dropna(subset=['CRASH_DATE'])
+    .loc[:, ['CRASH_DATE', 'intersection_id']]
+    .reset_index(drop=True)
 )
 print(f'  → final_df has {len(final_df):,} rows')
 
-# 3) Group into NumPy arrays for speed & small pickles
 print('Grouping by intersection …')
 grouped = (
     final_df
-      .groupby('intersection_id')['CRASH_DATE']
-      .apply(lambda s: s.sort_values().to_numpy("datetime64[ns]"))
-      .to_dict()
+    .groupby('intersection_id')['CRASH_DATE']
+    .apply(lambda s: s.sort_values().to_numpy("datetime64[ns]"))
+    .to_dict()
 )
 print(f'  → built {len(grouped):,} groups')
 
-# 4) Snapshot dates (1 Jan every year with 5 y history & 6 m future)
 print('Computing snapshot dates …')
 start_date = final_df['CRASH_DATE'].min() + pd.DateOffset(years=5)
 end_date   = final_df['CRASH_DATE'].max() - pd.DateOffset(months=6)
@@ -126,7 +118,6 @@ def process_intersection(item):
         })
     return recs
 
-# 5) Parallel execution
 print('Running parallel processing …')
 results = []
 with ProcessPoolExecutor(max_workers=multiprocessing.cpu_count()) as exe:
@@ -137,7 +128,6 @@ with ProcessPoolExecutor(max_workers=multiprocessing.cpu_count()) as exe:
 processed_df = pd.DataFrame(results)
 print(f'  → processed_df has {len(processed_df):,} rows')
 
-# 6) Write per‑year CSVs
 print('Writing per‑year outputs …')
 processed_df['YEAR'] = processed_df['prediction_time'].dt.year
 for yr, df_y in processed_df.groupby('YEAR'):
@@ -147,19 +137,15 @@ for yr, df_y in processed_df.groupby('YEAR'):
     df_y.to_csv(out_file, index=False)
     print(f'  → wrote {len(df_y):,} rows to {out_file}')
 
-# 7) Shrink the volume a bit
 os.remove("collisions.csv")
 PYCODE
 
-        echo 'Transform stage complete. Directory listing:'
-        ls -l /data/nyc-crashes
-        echo 'Year directories:'
-        find /data/nyc-crashes -maxdepth 1 -type d -name 'year_*' | sort
+      echo 'Transform stage complete. Directory listing:'
+      ls -l /data/nyc-crashes
+      echo 'Year directories:'
+      find /data/nyc-crashes -maxdepth 1 -type d -name 'year_*' | sort
 
-
-  # ──────────────────────────────────────────────────────────────────
-  # 3) Load stage – push year folders to remote via rclone
-  # ──────────────────────────────────────────────────────────────────
+  # ───────────────────────────── Load stage ───────────────────────────────
   load-data:
     image: rclone/rclone:latest
     container_name: etl_load_data
@@ -171,23 +157,22 @@ PYCODE
       - nyc-crashes:/data
       - ${HOME}/.config/rclone/rclone.conf:/root/.config/rclone/rclone.conf:ro
     environment:
-      # Must be exported before `docker compose up`
       RCLONE_CONTAINER: ${RCLONE_CONTAINER}
     entrypoint: /bin/bash
     command: |
-        set -euo pipefail
+      set -euo pipefail
 
-        if [ -z "${RCLONE_CONTAINER:-}" ]; then
-            echo 'ERROR: RCLONE_CONTAINER env var is not set'; exit 1
-        fi
+      if [ -z "${RCLONE_CONTAINER:-}" ]; then
+          echo 'ERROR: RCLONE_CONTAINER env var is not set'; exit 1
+      fi
 
-        echo 'Cleaning up existing contents of remote container …'
-        rclone delete chi_tacc:${RCLONE_CONTAINER} --rmdirs || true
+      echo 'Cleaning up existing contents of remote container …'
+      rclone delete chi_tacc:${RCLONE_CONTAINER} --rmdirs || true
 
-        echo 'Uploading new data …'
-        rclone copy /data/nyc-crashes chi_tacc:${RCLONE_CONTAINER} \
-               --progress --transfers=32 --checkers=16 \
-               --multi-thread-streams=4 --fast-list
+      echo 'Uploading new data …'
+      rclone copy /data/nyc-crashes chi_tacc:${RCLONE_CONTAINER} \
+             --progress --transfers=32 --checkers=16 \
+             --multi-thread-streams=4 --fast-list
 
-        echo 'Remote listing after load stage:'
-        rclone lsd chi_tacc:${RCLONE_CONTAINER}
+      echo 'Remote listing after load stage:'
+      rclone lsd chi_tacc:${RCLONE_CONTAINER}
