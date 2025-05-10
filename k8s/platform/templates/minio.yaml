@@ -7,6 +7,7 @@ spec:
     storage: 5Gi
   accessModes:
     - ReadWriteOnce
+  storageClassName: ""
   persistentVolumeReclaimPolicy: Retain
   hostPath:
     path: /mnt/block/minio_data
@@ -18,7 +19,7 @@ metadata:
   name: minio-pvc
   namespace: nyc-vision-zero-platform
 spec:
-  storageClassName: local-path-storage
+  storageClassName: ""
   accessModes:
     - ReadWriteOnce
   resources:
