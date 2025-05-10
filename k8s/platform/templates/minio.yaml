@@ -18,6 +18,7 @@ metadata:
   name: minio-pvc
   namespace: nyc-vision-zero-platform
 spec:
+  storageClassName: local-path-storage
   accessModes:
     - ReadWriteOnce
   resources:
