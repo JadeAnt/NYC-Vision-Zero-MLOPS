@@ -19,11 +19,6 @@ services:
       - |
         set -euo pipefail
 
-        echo 'Installing curl …'
-        apt-get update -qq
-        apt-get install -y --no-install-recommends curl ca-certificates
-        rm -rf /var/lib/apt/lists/*
-
         echo 'Resetting dataset directory …'
         rm -rf nyc-crashes
         mkdir -p nyc-crashes
