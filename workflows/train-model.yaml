@@ -101,18 +101,28 @@ spec:
           image: python:3.10-slim
           command: [sh, -c]
           source: |
-            pip install mlflow
-            python -c '
-            import requests, json
+            set -e
+            pip install --no-cache-dir requests
+            python3 <<EOF
+            import requests
+            
             mlflow_uri = "{{inputs.parameters.mlflow-uri}}"
             model_name = "{{inputs.parameters.model-name}}"
-            resp = requests.post(
+            
+            response = requests.post(
                 f"{mlflow_uri}/api/2.0/mlflow/model-versions/search",
-                json={"filter": f"name=\'{model_name}\'", "max_results": 1}
+                headers={"Content-Type": "application/json"},
+                json={"filter": f"name='{model_name}'", "max_results": 1}
             )
-            version = resp.json()["model_versions"][0]["version"]
-            print(version)
-            '
+            
+            response.raise_for_status()
+            data = response.json()
+            if not data.get("model_versions"):
+                raise RuntimeError("No model versions found")
+            
+            version = data["model_versions"][0]["version"]
+            print(version, end="")
+            EOF
 
     - name: trigger-build
       inputs:
