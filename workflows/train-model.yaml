@@ -11,7 +11,7 @@ spec:
         accessModes: ["ReadWriteOnce"]
         resources:
           requests:
-            storage: 1Gi
+            storage: 2Gi
   arguments:
     parameters:
       - name: ray-head-ip
@@ -83,11 +83,11 @@ spec:
 
           JOB_ID=$(ray job submit \
             --address http://{{inputs.parameters.ray-head-ip}}:8265 \
-            --working-dir /mnt/repo-volume/repo \
+            --working-dir /mnt/repo-volume/repo/train \
             --runtime-env-json='{
               "pip": ["ray[train]", "ray[tune]","mlflow","scikit-learn","joblib"]
               }'  \
-            -- python train/flow.py --epochs 10)
+            -- python flow.py)
 
           if [ -z "$JOB_ID" ] || [ "$JOB_ID" = "null" ]; then
             echo "[ERROR] Ray CLI failed to return a job_id" >&2
