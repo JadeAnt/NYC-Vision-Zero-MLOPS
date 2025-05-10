@@ -13,8 +13,10 @@ import mlflow.sklearn
 from mlflow.tracking import MlflowClient
 
 import ray
+import tune_sklearn
 from ray import tune
-from ray.tune.sklearn import TuneSearchCV
+#from ray.tune.sklearn import TuneSearchCV
+from tune_sklearn import TuneSearchCV
 from ray.util.joblib import register_ray
 
 
