@@ -6,6 +6,7 @@ from sklearn.model_selection import TimeSeriesSplit
 from sklearn.metrics import accuracy_score
 from sklearn.preprocessing import LabelEncoder
 from sklearn.utils import shuffle
+import joblib
 
 import mlflow
 import mlflow.sklearn
