@@ -88,9 +88,7 @@ spec:
           mkdir -p /tmp/mlflow_model
 
           echo "Downloading MLflow model artifacts..."
-          mlflow artifacts download \
-            --artifact-uri models:/CrashModel/{{inputs.parameters.model-version}} \  
-            -d /tmp/mlflow_model || { echo "MLflow download failed"; exit 1; }
+          mlflow artifacts download --artifact-uri models:/CrashModel/{{inputs.parameters.model-version}} -d /tmp/mlflow_model || { echo "MLflow download failed"; exit 1; }
 
           echo "Searching for crashmodel..."
           FOUND=$(find /tmp/mlflow_model/data -name crash_model.joblib | head -n 1)     
