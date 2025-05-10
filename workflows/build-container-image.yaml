@@ -89,17 +89,17 @@ spec:
 
           echo "Downloading MLflow model artifacts..."
           mlflow artifacts download \
-            --artifact-uri models:/CrashModel/{{inputs.parameters.model-version}} \                    # changed GourmetGramFood11Model to CrashModel
+            --artifact-uri models:/CrashModel/{{inputs.parameters.model-version}} \  
             -d /tmp/mlflow_model || { echo "MLflow download failed"; exit 1; }
 
-          echo "Searching for model.pth..."
-          FOUND=$(find /tmp/mlflow_model/data -name model.pth | head -n 1)                             # may need to change name of model.pth
+          echo "Searching for crashmodel..."
+          FOUND=$(find /tmp/mlflow_model/data -name crash_model.joblib | head -n 1)     
           if [ -z "$FOUND" ]; then
-            echo "ERROR: model.pth not found in MLflow artifacts"; exit 1
+            echo "ERROR: crash_model.joblib not found in MLflow artifacts"; exit 1
           fi
 
-          echo "Copying model.pth to app/ as crash_model.pkl..."                                            
-          cp "$FOUND" /mnt/workspace/crash_model.pkl                                                   # changed food11.pth to crash_model.pkl
+          echo "Copying crash_model.joblib to app/ as crash_model.joblib..."                                            
+          cp "$FOUND" /mnt/workspace/crash_model.joblib     
           echo "1.0.{{inputs.parameters.model-version}}" > /mnt/workspace/versions.txt
       volumeMounts:
       - name: workdir
@@ -127,7 +127,7 @@ spec:
     inputs:
       parameters:
       - name: model-version
-    script:                                                                                                                    # under source -> changed name=GourmetGramFood11Model to name=CrashModel
+    script:                         
       image: python:3.11-slim
       command: [sh, -c]
       source: |
