@@ -109,7 +109,7 @@ spec:
             mlflow_uri = "{{inputs.parameters.mlflow-uri}}"
             model_name = "{{inputs.parameters.model-name}}"
             
-            response = requests.post(
+            response = requests.get(
                 f"{mlflow_uri}/api/2.0/mlflow/model-versions/search",
                 headers={"Content-Type": "application/json"},
                 json={"filter": f"name='{model_name}'", "max_results": 1}
