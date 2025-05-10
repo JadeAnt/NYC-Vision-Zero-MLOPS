@@ -15,8 +15,8 @@ services:
     volumes:
       - nyc-crashes:/data
     working_dir: /data
+    entrypoint: [ "bash", "-c" ]
     command: |
-      #!/usr/bin/env bash
       set -euo pipefail
 
       echo 'Installing curl …'
