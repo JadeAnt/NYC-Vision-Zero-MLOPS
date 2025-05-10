@@ -98,24 +98,28 @@ spec:
           - name: mlflow-uri
           - name: model-name
       script:
-        image: curlimages/curl:8.2.1
-        command: [sh, -c]
+        image: python:3.10-slim
+        command: [python]
         source: |
-          # Query MLflow Model Registry for the latest version of this model
-          # Using the MLflow 2.0 REST API:
-          RESPONSE=$(curl -s -X POST \
-            {{inputs.parameters.mlflow-uri}}/api/2.0/mlflow/model-versions/search \
-            -H "Content-Type: application/json" \
-            -d "{\"filter\": \"name='{{inputs.parameters.model-name}}'\", \"page_size\":1}")
-
-          VERSION=$(echo "$RESPONSE")
-
-          if [ -z "$VERSION" ]; then
-            echo "ERROR: could not find model version in MLflow registry" >&2
-            exit 1
-          fi
-
-          echo -n "$VERSION"
+          import mlflow
+          import sys
+    
+          mlflow.set_tracking_uri("{{inputs.parameters.mlflow-uri}}")
+    
+          client = mlflow.MlflowClient()
+          name = "{{inputs.parameters.model-name}}"
+    
+          versions = client.search_model_versions(f"name='{name}'")
+          if not versions:
+              print("ERROR: could not find model version in MLflow registry", file=sys.stderr)
+              sys.exit(1)
+    
+          # Sort by creation timestamp to find latest version
+          latest_version = sorted(versions, key=lambda v: int(v.creation_timestamp), reverse=True)[0].version
+          print(latest_version)
+      outputs:
+        result:
+          name: model-version
 
     - name: trigger-build
       inputs:
