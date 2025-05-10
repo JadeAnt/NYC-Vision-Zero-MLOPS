@@ -43,11 +43,17 @@ spec:
           volumeMounts: #added volumes to stop warning
             - mountPath: /dev/shm
               name: dshm
+            - mountPath: /mnt/object
+              name: object-storage
       volumes:
         - name: dshm
           emptyDir:
             medium: Memory
             sizeLimit: 1Gi
+        - name: object-storage
+          hostPath:
+            path: /mnt/object
+            type: Directory
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -84,11 +90,17 @@ spec:
           volumeMounts:
             - mountPath: /dev/shm
               name: dshm
+            - mountPath: /mnt/object
+              name: object-storage
       volumes:
         - name: dshm
           emptyDir:
             medium: Memory
             sizeLimit: 2Gi
+        - name: object-storage
+          hostPath:
+            path: /mnt/object
+            type: Directory
 ---
 apiVersion: v1
 kind: Service
