@@ -22,6 +22,8 @@ def main():
     # Load dataset
     X, y = load_iris(return_X_y=True)
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+    
+    mlflow.set_tracking_uri("http://10.56.2.49:8000") # change later to not hard code like this
 
     # Enable MLflow autologging for scikit-learn
     mlflow.sklearn.autolog()
