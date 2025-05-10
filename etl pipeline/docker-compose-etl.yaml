@@ -158,10 +158,10 @@ services:
     volumes:
       - nyc-crashes:/data
       - ${HOME}/.config/rclone/rclone.conf:/root/.config/rclone/rclone.conf:ro
+    entrypoint: /bin/sh
     environment:
       RCLONE_CONTAINER: ${RCLONE_CONTAINER}
     command:
-      - /bin/sh
       - -c
       - |
         set -euo pipefail
