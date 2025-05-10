@@ -117,9 +117,6 @@ spec:
           # Sort by creation timestamp to find latest version
           latest_version = sorted(versions, key=lambda v: int(v.creation_timestamp), reverse=True)[0].version
           print(latest_version)
-      outputs:
-        result:
-          name: model-version
 
     - name: trigger-build
       inputs:
