@@ -1,83 +1,65 @@
 import os
 import time
-import sklearn
-import mlflow
 import joblib
-import asyncio
-#from fastapi import FastAPI, HTTPException
-from prefect import flow, task, get_run_logger
+import mlflow
+import ray
+from ray.train.sklearn import SklearnTrainer
+from ray.train import ScalingConfig, Checkpoint
 from mlflow.tracking import MlflowClient
 
 MODEL_PATH = "crash_model.joblib"
 MODEL_NAME = "CrashModel"
 
-#app = FastAPI()
-pipeline_lock = asyncio.Lock()
+def train_loop(config):
+    time.sleep(5)
 
-@task
-def load_and_train_model():
-    logger = get_run_logger()
-    logger.info("Pretending to train, actually just loading a model...")
-    time.sleep(10)
-    #model = torch.load(MODEL_PATH, weights_only=False, map_location=torch.device('cpu'))
     model = joblib.load(MODEL_PATH)
-    
-    logger.info("Logging model to MLflow...")
-    mlflow.pytorch.log_model(model, artifact_path="model")
-    return model
 
-@task
-def evaluate_model():
-    logger = get_run_logger()
-    logger.info("Model evaluation on basic metrics...")
+    print(model.__getstate__())
+
+    # Dummy metrics
     accuracy = 0.85
     loss = 0.35
-    logger.info(f"Logging metrics: accuracy={accuracy}, loss={loss}")
-    mlflow.log_metric("accuracy", accuracy)
-    mlflow.log_metric("loss", loss)
-    return accuracy >= 0.80
 
-@task
-def register_model_if_passed(passed: bool):
-    logger = get_run_logger()
-    if not passed:
-        logger.info("Evaluation did not pass criteria. Skipping registration.")
-        return None
+    # Save the model to checkpoint
+    checkpoint = Checkpoint.from_dict({"model": model})
+    ray.train.report({"accuracy": accuracy, "loss": loss}, checkpoint=checkpoint)
 
-    logger.info("Registering model in MLflow Model Registry...")
-    client = MlflowClient()
-    run_id = mlflow.active_run().info.run_id
-    model_uri = f"runs:/{run_id}/model"
-    registered_model = mlflow.register_model(model_uri=model_uri, name=MODEL_NAME)
-    client.set_registered_model_alias(
-        name=MODEL_NAME,
-        alias="development",
-        version=registered_model.version
+def main():
+    ray.init()
+
+    trainer = SklearnTrainer(
+        train_loop_per_worker=train_loop,
+        scaling_config=ScalingConfig(num_workers=1, use_gpu=False),
     )
-    logger.info(f"Model registered (v{registered_model.version}) and alias 'development' assigned.")
-    return registered_model.version
 
-@flow(name="mlflow_flow")
-def ml_pipeline_flow():
-    with mlflow.start_run():
-        load_and_train_model()
-        passed = evaluate_model()
-        version = register_model_if_passed(passed)
-        return version
+    result = trainer.fit()
 
-#@app.post("/trigger-training")
-#async def trigger_training():
-#    if pipeline_lock.locked():
-#        raise HTTPException(status_code=423, detail="Pipeline is already running. Please wait.")
-#
-#    async with pipeline_lock:
-#        loop = asyncio.get_event_loop()
-#        version = await loop.run_in_executor(None, ml_pipeline_flow)
-#        if version:
-#            return {"status": "Pipeline executed successfully", "new_model_version": version}
-#        else:
-#            return {"status": "Pipeline executed, but no new model registered"}
+    model = result.checkpoint.to_dict()["model"]
+    metrics = result.metrics
+    accuracy = metrics.get("accuracy", 0.0)
+    loss = metrics.get("loss", 1.0)
 
-#if __name__ == "__main__":
-#    import uvicorn
-#    uvicorn.run(app, host="0.0.0.0", port=8000)
+    with mlflow.start_run() as run:
+        mlflow.log_metric("accuracy", accuracy)
+        mlflow.log_metric("loss", loss)
+        mlflow.sklearn.log_model(model, artifact_path="model")
+
+        print(f"[INFO] Logged model to MLflow run: {run.info.run_id}")
+
+        if accuracy >= 0.80:
+            client = MlflowClient()
+            model_uri = f"runs:/{run.info.run_id}/model"
+            registered_model = mlflow.register_model(model_uri=model_uri, name=MODEL_NAME)
+
+            client.set_registered_model_alias(
+                name=MODEL_NAME,
+                alias="development",
+                version=registered_model.version
+            )
+            print(f"[INFO] Registered model as version {registered_model.version} with alias 'development'")
+        else:
+            print("[INFO] Model accuracy did not meet the threshold for registration.")
+
+if __name__ == "__main__":
+    main()
