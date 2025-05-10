@@ -100,38 +100,6 @@ spec:
           - name: repo-volume
             mountPath: /mnt/repo-volume
 
-    - name: poll-ray-job
-      inputs:
-        parameters:
-          - name: ray-head-ip
-          - name: job-id
-      script:
-        image: curlimages/curl:8.2.1
-        command: [sh, -c]
-        source: |
-          MAX_RETRIES=60
-          SLEEP=10
-          i=0
-
-          while [ $i -lt $MAX_RETRIES ]; do
-            STATUS=$(curl -s \
-              http://{{inputs.parameters.ray-head-ip}}:8265/api/jobs/{{inputs.parameters.job-id}})
-
-            echo "[INFO] Ray job status: $STATUS" >&2
-            if [ "$STATUS" = "SUCCEEDED" ]; then
-              exit 0
-            elif [ "$STATUS" = "FAILED" ]; then
-              echo "ERROR: Ray job failed" >&2
-              exit 1
-            fi
-
-            i=$((i+1))
-            sleep $SLEEP
-          done
-
-          echo "ERROR: Ray job did not complete after $((MAX_RETRIES * SLEEP)) seconds" >&2
-          exit 1
-
     - name: query-mlflow
       inputs:
         parameters:
