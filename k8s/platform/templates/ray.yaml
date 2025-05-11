@@ -25,11 +25,11 @@ spec:
           image: rayproject/ray:latest
           resources:
             requests:
-              memory: "1Gi"
+              memory: "2Gi"
               cpu: "500m"
             limits:
-              memory: "5Gi"
-              cpu: "2"
+              memory: "4Gi"
+              cpu: "3"
           env: # get mlflow tracking
             - name: RAY_memory_usage_threshold
               value: "0.98"
