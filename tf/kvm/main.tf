@@ -68,3 +68,46 @@ resource "openstack_networking_floatingip_v2" "floating_ip" {
   description = "MLOps IP for ${var.suffix}"
   port_id     = openstack_networking_port_v2.sharednet2_ports["node1"].id
 }
+
+
+
+
+# --- Chi@Edge Section ---
+
+resource "openstack_networking_port_v2" "edge_sharednet2_port" {
+  provider   = openstack.chiedge
+  name       = "chi-edge-port-${var.chi_suffix}"
+  network_id = data.openstack_networking_network_v2.edge_sharednet2.id
+  security_group_ids = [
+    data.openstack_networking_secgroup_v2.allow_ssh.id,
+    data.openstack_networking_secgroup_v2.allow_8000.id        # FastAPI
+  ]
+}
+
+resource "openstack_compute_instance_v2" "chi_edge_node" {
+  provider    = openstack.chiedge
+  name        = "chi-edge-${var.chi_suffix}"
+  image_name  = "CC-Ubuntu24.04"                  # May need to change
+  flavor_name = "arm.rpi5"                        # May need to change
+  key_pair    = var.key
+
+  network {
+    port = openstack_networking_port_v2.edge_sharednet2_port.id
+  }
+
+  user_data = <<-EOF
+    #!/bin/bash
+    sudo apt update
+    sudo apt install -y python3-pip
+    pip3 install fastapi uvicorn
+  EOF
+}
+
+resource "openstack_networking_floatingip_v2" "edge_floating_ip" {
+  provider = openstack.chiedge
+  pool     = "public"
+  port_id  = openstack_networking_port_v2.edge_sharednet2_port.id
+}
+
+
+
