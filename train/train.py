@@ -82,9 +82,9 @@ def train_model(config, X, y):
         tune.report(accuracy=avg_accuracy)
 
 def main():
-    ray.init(address="http://10.56.2.49:8265")
+    ray.init()
 
-    register_ray()
+    #register_ray()
 
     mlflow.set_tracking_uri("http://10.56.2.49:8000")  # Update as needed
     df = load_data()
