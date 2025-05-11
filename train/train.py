@@ -61,7 +61,6 @@ def train_and_log_model(X, y):
         config = {
             "n_estimators": 100,
             "max_depth": 20,
-            "min_samples_split": 0.05
         }
 
         for train_index, val_index in tscv.split(X):
@@ -71,9 +70,7 @@ def train_and_log_model(X, y):
             rf = RandomForestClassifier(
                 n_estimators=config["n_estimators"],
                 max_depth=config["max_depth"],
-                min_samples_split=config["min_samples_split"],
-                random_state=42,
-                n_jobs=-1
+                random_state=42
             )
             rf.fit(X_train, y_train)
             preds = rf.predict(X_val)
