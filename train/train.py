@@ -95,7 +95,7 @@ def main():
 
     mlflow.set_tracking_uri("http://10.56.2.49:8000")
 
-    df = ray.get(load_data().remote())
+    df = ray.get(load_data.remote())
     X, y = preprocess(df)
     train_and_log_model(X, y)
 
