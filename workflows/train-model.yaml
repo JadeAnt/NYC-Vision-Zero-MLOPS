@@ -91,19 +91,19 @@ spec:
 
           echo "[INFO] Copying files to working dir"
 
-          cp /mnt/object/year_2018/processed_2018.csv /mnt/repo-volume/repo
+          cp /mnt/object/year_2018/processed_2018.csv /mnt/repo-volume/repo/train
 
-          cp /mnt/object/year_2019/processed_2019.csv /mnt/repo-volume/repo
+          cp /mnt/object/year_2019/processed_2019.csv /mnt/repo-volume/repo/train
 
-          cp /mnt/object/year_2020/processed_2020.csv /mnt/repo-volume/repo
+          cp /mnt/object/year_2020/processed_2020.csv /mnt/repo-volume/repo/train
 
-          cp /mnt/object/year_2021/processed_2021.csv /mnt/repo-volume/repo
+          cp /mnt/object/year_2021/processed_2021.csv /mnt/repo-volume/repo/train
 
-          cp /mnt/object/year_2022/processed_2022.csv /mnt/repo-volume/repo
+          cp /mnt/object/year_2022/processed_2022.csv /mnt/repo-volume/repo/train
 
-          cp /mnt/object/year_2023/processed_2023.csv /mnt/repo-volume/repo
+          cp /mnt/object/year_2023/processed_2023.csv /mnt/repo-volume/repo/train
 
-          cp /mnt/object/year_2024/processed_2024.csv /mnt/repo-volume/repo
+          cp /mnt/object/year_2024/processed_2024.csv /mnt/repo-volume/repo/train
 
           echo "[INFO] Files copied. Listing destination contents:" 
 
@@ -121,11 +121,11 @@ spec:
 
           JOB_ID=$(ray job submit \
             --address http://{{inputs.parameters.ray-head-ip}}:8265 \
-            --working-dir /mnt/repo-volume/repo/  \
+            --working-dir /mnt/repo-volume/repo/train  \
             --runtime-env-json='{
               "pip": ["ray","ray[train]", "ray[tune]","mlflow","scikit-learn","joblib","tune-sklearn", "pandas", "scikit-optimize", "optuna"]
               }'  \
-            -- python train/train.py)
+            -- python opt_train.py)
 
           if [ -z "$JOB_ID" ] || [ "$JOB_ID" = "null" ]; then
             echo "[ERROR] Ray CLI failed to return a job_id" >&2
