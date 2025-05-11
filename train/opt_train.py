@@ -24,18 +24,18 @@ def load_csv(file):
         return pd.DataFrame()
 
 def preprocess(df):
-    df = df.dropna()
-    df["intersection_id"] = df["intersection_id"].astype("category").cat.codes
-    df["accidents_6m"] = df["accidents_6m"].astype(int)
-    df["accidents_1y"] = df["accidents_1y"].astype(int)
-    df["accidents_5y"] = df["accidents_5y"].astype(int)
-    df["YEAR"] = df["YEAR"].astype(int)
-    features = ["intersection_id", "accidents_6m", "accidents_1y", "accidents_5y", "YEAR"]
+    #df = df.dropna()
+    #df["intersection_id"] = df["intersection_id"].astype("category").cat.codes
+    #df["accidents_6m"] = df["accidents_6m"].astype(int)
+    #df["accidents_1y"] = df["accidents_1y"].astype(int)
+    #df["accidents_5y"] = df["accidents_5y"].astype(int)
+    #df["YEAR"] = df["YEAR"].astype(int)
+    features = ["accidents_6m", "accidents_1y", "accidents_5y"]
     X = df[features]
     y = df[TARGET_COLUMN]
     return X, y
 
-@ray.remote(num_cpus=2, memory=2 * 1024 * 1024 * 1024)
+@ray.remote(num_cpus=1, memory=1 * 1024 * 1024 * 1024)
 def train_fold(X_train, X_val, y_train, y_val, config):
     rf = RandomForestClassifier(
         n_estimators=config["n_estimators"],
