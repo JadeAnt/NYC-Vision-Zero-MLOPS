@@ -1,4 +1,5 @@
 import os
+import numpy
 import pandas as pd
 from glob import glob
 from sklearn.ensemble import RandomForestClassifier
@@ -39,7 +40,14 @@ def load_data():
 
 def preprocess(df):
     df = df.dropna()
-    X = df.drop(columns=[TARGET_COLUMN])
+    features = ["intersection_id","accidents_6m","accidents_1y","accidents_5y","YEAR"]
+    #X = df.drop(columns=[TARGET_COLUMN])
+    df["intersection_id"] = df["intersection_id"].astype("category").cat.codes
+    df["accidents_6m"] = df["accidents_6m"].astype(int)
+    df["accidents_1y"] = df["accidents_1y"].astype(int)
+    df["accidents_5y"] = df["accidents_5y"].astype(int)
+    df["YEAR"] = df["YEAR"].astype(int)
+    X = df[features]
     y = df[TARGET_COLUMN]
     return X, y
 
