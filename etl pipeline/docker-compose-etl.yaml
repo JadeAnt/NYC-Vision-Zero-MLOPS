@@ -58,6 +58,7 @@ services:
         import pandas as pd
         from concurrent.futures import ProcessPoolExecutor, as_completed
         import multiprocessing
+        import hashlib
         from datetime import datetime
 
         print('Loading CSV …')
@@ -79,6 +80,10 @@ services:
             .reset_index(drop=True)
         )
         print(f'→ final_df has {len(final_df):,} rows')
+        final_df['intersection_id'] = final_df['intersection_id'].apply(
+        lambda s: int(hashlib.sha256(s.encode('utf-8')).hexdigest(), 16) % 10**8
+        )
+        print('→ intersection_id column converted to stable 8-digit hashes')
 
         print('Grouping by intersection …')
         grouped = (
