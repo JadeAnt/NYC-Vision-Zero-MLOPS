@@ -26,9 +26,9 @@ spec:
           resources:
             requests:
               memory: "2Mi"
-              cpu: "500m"
+              cpu: "1"
             limits:
-              memory: "5Gi"
+              memory: "6Gi"
               cpu: "2"
           env: # get mlflow tracking
             - name: MLFLOW_TRACKING_URI
