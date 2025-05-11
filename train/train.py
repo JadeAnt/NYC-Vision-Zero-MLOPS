@@ -18,7 +18,7 @@ from ray.tune.schedulers import ASHAScheduler
 
 # Constants
 #DATA_DIR = "/mnt/object"
-YEAR_FOLDERS = [f"year_{y}" for y in range(2018, 2025)]
+#YEAR_FOLDERS = [f"year_{y}" for y in range(2018, 2025)]
 TARGET_COLUMN = "future_accidents_6m"
 MODEL_NAME = "CrashModel"
 
@@ -29,18 +29,19 @@ def load_data():
     #print(path)
     #print(files)
     dfs = []
-    for year in YEAR_FOLDERS:
-        path = os.path.join(DATA_DIR, year, "*.csv")
-        files = glob(path)
-        if not files:
-            print(f"[WARNING] No CSV files found in {path}")
-        for file in files:
-            try:
-                df = pd.read_csv(file, parse_dates=True)
-                df["__year"] = year  # For debugging or tracking
-                dfs.append(df)
-            except Exception as e:
-                print(f"[ERROR] Failed to read {file}: {e}")
+    #for year in YEAR_FOLDERS:
+        #path = os.path.join(DATA_DIR, year, "*.csv")
+        #files = glob(path)
+        #if not files:
+         #   print(f"[WARNING] No CSV files found in {path}")
+    files = ["processed_2018.csv","processed_2019.csv","processed_2020.csv","processed_2021.csv","processed_2022.csv","processed_2023.csv","processed_2024.csv"]
+    for file in files:
+        try:
+            df = pd.read_csv(file, parse_dates=True)
+            df["__year"] = year  # For debugging or tracking
+            dfs.append(df)
+        except Exception as e:
+            print(f"[ERROR] Failed to read {file}: {e}")
     if not dfs:
         raise ValueError("No CSV files were loaded. Please check the data directory and file paths.")
     data = pd.concat(dfs, ignore_index=True)
