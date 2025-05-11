@@ -69,9 +69,9 @@ if __name__ == "__main__":
     df = pd.concat(dfs, ignore_index=True)
     
     X, y = preprocess(df)
-    tscv = TimeSeriesSplit(n_splits=3)
+    tscv = TimeSeriesSplit(n_splits=5)
 
-    config = {"n_estimators": 100, "max_depth": 10}
+    config = {"n_estimators": 100, "max_depth": 20}
     results = []
 
     with mlflow.start_run() as run:
