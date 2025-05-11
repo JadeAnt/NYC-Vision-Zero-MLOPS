@@ -1,9 +1,11 @@
 resource "openstack_networking_network_v2" "private_net" {
+  provider = openstack.kvm
   name                  = "private-net-mlops-${var.suffix}"
   port_security_enabled = false
 }
 
 resource "openstack_networking_subnet_v2" "private_subnet" {
+  provider = openstack.kvm
   name       = "private-subnet-mlops-${var.suffix}"
   network_id = openstack_networking_network_v2.private_net.id
   cidr       = "192.168.1.0/24"
@@ -11,6 +13,7 @@ resource "openstack_networking_subnet_v2" "private_subnet" {
 }
 
 resource "openstack_networking_port_v2" "private_net_ports" {
+  provider = openstack.kvm
   for_each              = var.nodes
   name                  = "port-${each.key}-mlops-${var.suffix}"
   network_id            = openstack_networking_network_v2.private_net.id
@@ -23,6 +26,7 @@ resource "openstack_networking_port_v2" "private_net_ports" {
 }
 
 resource "openstack_networking_port_v2" "sharednet2_ports" {
+  provider = openstack.kvm
   for_each   = var.nodes
     name       = "sharednet2-${each.key}-mlops-${var.suffix}"
     network_id = data.openstack_networking_network_v2.sharednet2.id
@@ -40,6 +44,7 @@ resource "openstack_networking_port_v2" "sharednet2_ports" {
 }
 
 resource "openstack_compute_instance_v2" "nodes" {
+  provider = openstack.kvm
   for_each = var.nodes
 
   name        = "${each.key}-mlops-${var.suffix}"
@@ -64,6 +69,7 @@ resource "openstack_compute_instance_v2" "nodes" {
 }
 
 resource "openstack_networking_floatingip_v2" "floating_ip" {
+  provider = openstack.kvm
   pool        = "public"
   description = "MLOps IP for ${var.suffix}"
   port_id     = openstack_networking_port_v2.sharednet2_ports["node1"].id
