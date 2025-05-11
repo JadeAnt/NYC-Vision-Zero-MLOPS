@@ -79,60 +79,60 @@ spec:
         pip install mlflow-skinny > /dev/null
         export MLFLOW_TRACKING_URI=http://mlflow.gourmetgram-platform.svc.cluster.local:8000
         python -c "import mlflow; client = mlflow.tracking.MlflowClient(); client.set_registered_model_alias(name='CrashModel', alias='{{inputs.parameters.alias}}', version='{{inputs.parameters.model-version}}')"
+     
+  - name: bring-up-edge-pi
+    inputs:
+      parameters:
+        - name: device-name
+        - name: lease-hours
+    metadata:
+      annotations:
+        workflows.argoproj.io/kube-context: chi@edge
+    script:
+      image: python:3.11-slim
+      command: [sh, -eux, -c]
+    env:
+      - name: LEASE_NAME
+        value: "serve-edge-project1"
+      - name: DEVICE_MODEL
+        value: "raspberrypi5"
+      - name: DEVICE_NAME
+        value: "{{inputs.parameters.device-name}}"
+      - name: LEASE_HOURS
+        value: "{{inputs.parameters.lease-hours}}"
+    source: |
+      python3 - << 'PYCODE'
+      import os, sys
+      from datetime import timedelta
+      from chi import context, lease
+      from chi.exceptions import LeaseNotFoundError
+      
+      # Bootstrap Chi
+      context.version = "1.0"
+      context.choose_project()
+      context.choose_site(default="CHI@Edge")
+      
+      # Read parameters
+      name  = os.getenv("LEASE_NAME")
+      dname = os.getenv("DEVICE_NAME")
+      model = os.getenv("DEVICE_MODEL")
+      hours = int(os.getenv("LEASE_HOURS"))
+      duration = timedelta(hours=hours)
 
- - name: bring-up-edge-pi
-   inputs:
-     parameters:
-       - name: device-name
-       - name: lease-hours
-   metadata:
-     annotations:
-       workflows.argoproj.io/kube-context: chi@edge
-   script:
-     image: python:3.11-slim
-     command: [sh, -eux, -c]
-     env:
-       - name: LEASE_NAME
-         value: "serve-edge-project1"
-       - name: DEVICE_MODEL
-         value: "raspberrypi5"
-       - name: DEVICE_NAME
-         value: "{{inputs.parameters.device-name}}"
-       - name: LEASE_HOURS
-         value: "{{inputs.parameters.lease-hours}}"
-     source: |
-       python3 - << 'PYCODE'
-       import os, sys
-       from datetime import timedelta
-       from chi import context, lease
-       from chi.exceptions import LeaseNotFoundError
+      # Check for existing lease
+      try:
+        existing = lease.get_lease(name)
+        print(f"Lease '{name}' already exists (status={existing.status}). Skipping.")
+        sys.exit(0)
+      except LeaseNotFoundError:
+        print(f"No lease named '{name}'—provisiong a new one...")
 
-       # Bootstrap Chi
-       context.version = "1.0"
-       context.choose_project()
-       context.choose_site(default="CHI@Edge")
-
-       # Read parameters
-       name  = os.getenv("LEASE_NAME")
-       dname = os.getenv("DEVICE_NAME")
-       model = os.getenv("DEVICE_MODEL")
-       hours = int(os.getenv("LEASE_HOURS"))
-       duration = timedelta(hours=hours)
-
-       # Check for existing lease
-       try:
-         existing = lease.get_lease(name)
-         print(f"Lease '{name}' already exists (status={existing.status}). Skipping.")
-         sys.exit(0)
-       except LeaseNotFoundError:
-         print(f"No lease named '{name}'—provisiong a new one...")
-
-       # Create & submit
-       l = lease.Lease(name=name, duration=duration)
-       l.add_device_reservation(amount=1, device_model=model, device_name=dname)
-       l.submit(wait_for_active=True, wait_timeout=300, idempotent=True)
-       print(f"Lease '{name}' is now active: {l.status}")
-       PYCODE
+      # Create & submit
+      l = lease.Lease(name=name, duration=duration)
+      l.add_device_reservation(amount=1, device_model=model, device_name=dname)
+      l.submit(wait_for_active=True, wait_timeout=300, idempotent=True)
+      print(f"Lease '{name}' is now active: {l.status}")
+      PYCODE
 
   - name: trigger-deploy
     inputs:
