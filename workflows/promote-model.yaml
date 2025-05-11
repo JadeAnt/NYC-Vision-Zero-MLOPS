@@ -36,8 +36,13 @@ spec:
             ({{workflow.parameters.source-environment}} == staging && {{workflow.parameters.target-environment}} == canary) ||
             ({{workflow.parameters.source-environment}} == canary && {{workflow.parameters.target-environment}} == production)
           template: offline-tests
-    
+
+      - - name: retrain-if-needed
+          when: "{{steps.run-offline-tests.outputs.exitCode}} != 0"
+          template: trigger-train-model
+      
       - - name: retag-image
+          when: "{{steps.run-offline-tests.outputs.exitCode}} == 0"
           template: skopeo-retag
           arguments:
             parameters:
@@ -47,7 +52,9 @@ spec:
               value: "{{workflow.parameters.target-environment}}"
             - name: model-version
               value: "{{workflow.parameters.model-version}}"
+              
       - - name: deploy
+          when: "{{steps.run-offline-tests.outputs.exitCode}} == 0"
           template: trigger-deploy
           arguments:
             parameters:
@@ -55,7 +62,9 @@ spec:
               value: "{{workflow.parameters.target-environment}}"
             - name: model-version
               value: "{{workflow.parameters.model-version}}"
+              
       - - name: update-mlflow-alias
+          when: "{{steps.run-offline-tests.outputs.exitCode}} == 0"
           template: set-mlflow-alias
           arguments:
             parameters:
@@ -98,6 +107,11 @@ spec:
           echo "Offline evaluation failed."
           exit 1
         fi
+
+  - name: trigger-train-model
+#
+# Empty implementation 
+#
 
   - name: skopeo-retag
     inputs:
