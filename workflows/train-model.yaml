@@ -12,13 +12,11 @@ spec:
         resources:
           requests:
             storage: 2Gi
-    - metadata:
-        name: object-storage
-      spec:
-        accessModes: ["ReadWriteMany"]
-        resources:
-          requests:
-            storage: 5Gi
+  volumes:
+    - name: object-storage
+      hostPath:
+        path: /mnt/object
+        type: Directory
   arguments:
     parameters:
       - name: ray-head-ip
@@ -74,6 +72,11 @@ spec:
           echo "[INFO] Contents of repo directory:"
           
           ls /mnt/repo-volume/repo
+
+          echo "[INFO] Contents of object storage"
+          
+          ls /mnt/object
+          
           echo "[INFO] Installing Ray CLI..."
 
           pip install --no-cache-dir "ray[default]" 
