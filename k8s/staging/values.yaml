@@ -2,7 +2,7 @@ replicaCount: 1
 
 image:
   repository: registry.kube-system.svc.cluster.local:5000/nyc-vision-zero-app
-  tag: staging-1.0.6
+  tag: staging-1.0.7
 
 service:
   port: 8081
