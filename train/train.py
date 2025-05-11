@@ -22,6 +22,7 @@ from ray.tune.schedulers import ASHAScheduler
 TARGET_COLUMN = "future_accidents_6m"
 MODEL_NAME = "CrashModel"
 
+@ray.remote(num_cpus=0.5, memory=500*1024*1024)  # 500 MB
 def load_data():
     #print("Files:", os.listdir(DATA_DIR))
    # print(os.system('ls -R /mnt/object'))
