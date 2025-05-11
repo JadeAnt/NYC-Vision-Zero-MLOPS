@@ -17,36 +17,25 @@ from ray.tune.search.optuna import OptunaSearch
 from ray.tune.schedulers import ASHAScheduler
 
 # Constants
-#DATA_DIR = "/mnt/object"
-#YEAR_FOLDERS = [f"year_{y}" for y in range(2018, 2025)]
 TARGET_COLUMN = "future_accidents_6m"
 MODEL_NAME = "CrashModel"
 
-#@ray.remote(num_cpus=0.5, memory=500*1024*1024)  # 500 MB
 def load_data():
-    #print("Files:", os.listdir(DATA_DIR))
-   # print(os.system('ls -R /mnt/object'))
-    #print(os.system('df -h'))
-    #print(path)
-    #print(files)
+    files = [
+        "processed_2018.csv", "processed_2019.csv", "processed_2020.csv",
+        "processed_2021.csv", "processed_2022.csv", "processed_2023.csv",
+        "processed_2024.csv"
+    ]
     dfs = []
-    #for year in YEAR_FOLDERS:
-        #path = os.path.join(DATA_DIR, year, "*.csv")
-        #files = glob(path)
-        #if not files:
-         #   print(f"[WARNING] No CSV files found in {path}")
-    files = ["processed_2018.csv","processed_2019.csv","processed_2020.csv","processed_2021.csv","processed_2022.csv","processed_2023.csv","processed_2024.csv"]
     for file in files:
         try:
             df = pd.read_csv(file, parse_dates=True)
-            #df["__year"] = year  # For debugging or tracking
             dfs.append(df)
         except Exception as e:
             print(f"[ERROR] Failed to read {file}: {e}")
     if not dfs:
-        raise ValueError("No CSV files were loaded. Please check the data directory and file paths.")
-    data = pd.concat(dfs, ignore_index=True)
-    return data
+        raise ValueError("No CSV files were loaded.")
+    return pd.concat(dfs, ignore_index=True)
 
 def preprocess(df):
     df = df.dropna()
@@ -54,19 +43,26 @@ def preprocess(df):
     y = df[TARGET_COLUMN]
     return X, y
 
-def train_model(config, X, y):
+def train_and_log_model(X, y):
     mlflow.set_experiment("VisionZeroCrashModel")
     with mlflow.start_run():
         tscv = TimeSeriesSplit(n_splits=5)
         accuracies = []
+
+        # Fixed hyperparameters
+        config = {
+            "n_estimators": 100,
+            "max_depth": 20,
+            "min_samples_split": 0.05
+        }
 
         for train_index, val_index in tscv.split(X):
             X_train, X_val = X.iloc[train_index], X.iloc[val_index]
             y_train, y_val = y.iloc[train_index], y.iloc[val_index]
 
             rf = RandomForestClassifier(
-                n_estimators=int(config["n_estimators"]),
-                max_depth=int(config["max_depth"]),
+                n_estimators=config["n_estimators"],
+                max_depth=config["max_depth"],
                 min_samples_split=config["min_samples_split"],
                 random_state=42,
                 n_jobs=-1
@@ -77,47 +73,25 @@ def train_model(config, X, y):
             accuracies.append(acc)
 
         avg_accuracy = sum(accuracies) / len(accuracies)
+
+        # Log to MLflow
         mlflow.log_params(config)
         mlflow.log_metric("avg_accuracy", avg_accuracy)
         mlflow.sklearn.log_model(rf, artifact_path="model", registered_model_name=MODEL_NAME)
-        tune.report(accuracy=avg_accuracy)
+
+        print(f"Average Accuracy: {avg_accuracy:.4f}")
 
 def main():
-    ray.init(address="auto")
-    
+    ray.init(address="auto")  # Ensure we connect to the cluster
+
     for node in ray.nodes():
         print(f"Node: {node['NodeManagerAddress']}, Alive: {node['Alive']}, Resources: {node['Resources']}")
 
-    #register_ray()
+    mlflow.set_tracking_uri("http://10.56.2.49:8000")
 
-    mlflow.set_tracking_uri("http://10.56.2.49:8000")  # Update as needed
     df = load_data()
     X, y = preprocess(df)
-
-    # Hyperparameter search space
-    search_space = {
-        "n_estimators": tune.randint(50, 200),
-        "max_depth": tune.randint(10, 30),
-        "min_samples_split": tune.uniform(0.01, 0.3),
-    }
-
-    # Scheduler and search algorithm
-    scheduler = ASHAScheduler(metric="accuracy", mode="max")
-    search_alg = OptunaSearch(metric="accuracy", mode="max")
-
-    # Run tuning
-    tuner = tune.Tuner(
-        tune.with_parameters(train_model, X=X, y=y),
-        tune_config=tune.TuneConfig(
-            scheduler=scheduler,
-            search_alg=search_alg,
-            num_samples=10,
-        ),
-        param_space=search_space,
-    )
-    results = tuner.fit()
-    best_result = results.get_best_result(metric="accuracy", mode="max")
-    print("Best hyperparameters found were: ", best_result.config)
+    train_and_log_model(X, y)
 
 if __name__ == "__main__":
     main()
