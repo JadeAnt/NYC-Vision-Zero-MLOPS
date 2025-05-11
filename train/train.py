@@ -83,7 +83,10 @@ def train_model(config, X, y):
         tune.report(accuracy=avg_accuracy)
 
 def main():
-    ray.init()
+    ray.init(address="auto")
+    
+    for node in ray.nodes():
+        print(f"Node: {node['NodeManagerAddress']}, Alive: {node['Alive']}, Resources: {node['Resources']}")
 
     #register_ray()
 
