@@ -131,13 +131,13 @@ def main():
     y = df[TARGET_COLUMN]
     mlflow.set_experiment("VisionZeroCrashModel")
     with mlflow.start_run():
-        tscv = TimeSeriesSplit(n_splits=5)
+        tscv = TimeSeriesSplit(n_splits=2)
         accuracies, precisions, recalls, f1s = [], [], [], []
 
         # Fixed hyperparameters
         config = {
             "n_estimators": 100,
-            "max_depth": 20,
+            "max_depth": 10,
         }
 
         for train_index, val_index in tscv.split(X):
