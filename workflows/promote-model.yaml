@@ -87,7 +87,7 @@ spec:
         pip install -q -r requirements.txt || echo "No requirements.txt found"
 
         echo "Running evaluation..."
-        OUTPUT=$(python3 evaluate.py)
+        OUTPUT=$(python3 evaluate_model.py)
 
         echo "$OUTPUT"
 
