@@ -112,8 +112,6 @@ def main():
             #dfs.append(tdf)
         except Exception as e:
             print(f"[ERROR] Failed to read {file}: {e}")
-    if not dfs:
-        raise ValueError("No CSV files were loaded.")
         
     #df = pd.concat(dfs, ignore_index=True)
     #data = data.sample(frac=0.3, random_state=42) 
