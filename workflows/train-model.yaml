@@ -12,6 +12,13 @@ spec:
         resources:
           requests:
             storage: 2Gi
+    - metadata:
+        name: object-storage
+      spec:
+        accessModes: ["ReadWriteMany"]
+        resources:
+          requests:
+            storage: 5Gi
   arguments:
     parameters:
       - name: ray-head-ip
@@ -91,6 +98,8 @@ spec:
         volumeMounts:
           - name: repo-volume
             mountPath: /mnt/repo-volume
+          - name: object-storage
+            mountPath: /mnt/object
 
     - name: query-mlflow
       inputs:
