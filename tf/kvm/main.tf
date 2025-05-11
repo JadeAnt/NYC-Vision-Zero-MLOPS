@@ -90,6 +90,7 @@ resource "openstack_networking_port_v2" "edge_public_port" {
   ]
 }
 
+/*
 resource "openstack_compute_instance_v2" "chi_edge_node" {
   provider    = openstack.chiedge
   name        = "chi-edge-${var.suffix}"
@@ -100,6 +101,7 @@ resource "openstack_compute_instance_v2" "chi_edge_node" {
   network {
     port = openstack_networking_port_v2.edge_public_port.id
   }
+*/
 
   user_data = <<-EOF
     #!/bin/bash
