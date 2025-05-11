@@ -13,8 +13,8 @@ spec:
   templates:
   - name: promote-flow
     steps:
-      - - name: bring-up-edge-pi
-          when: "{{workflow.parameters.source-environment}} == dev && {{workflow.parameters.target-environment}} == staging"
+      - - name: bring-up-edge-pi                 # canary to production only
+          when: "{{workflow.parameters.source-environment}} == canary && {{workflow.parameters.target-environment}} == production"
           template: bring-up-edge-pi
           arguments:
             parameters:
@@ -23,13 +23,19 @@ spec:
             - name: lease-hours
               value: "2"
               
-      - - name: start-fastapi-container
-          when: "{{workflow.parameters.source-environment}} == dev && {{workflow.parameters.target-environment}} == staging"
+      - - name: start-fastapi-container           # development to production only
+          when: "{{workflow.parameters.source-environment}} == canary && {{workflow.parameters.target-environment}} == production"
           template: start-fastapi-container
           arguments:
             parameters:
             - name: device-name
               value: nyu-rpi5-01
+
+      - - name: run-offline-tests                # staging to canary, and canary to production only
+          when: >
+            ({{workflow.parameters.source-environment}} == staging && {{workflow.parameters.target-environment}} == canary) ||
+            ({{workflow.parameters.source-environment}} == canary && {{workflow.parameters.target-environment}} == production)
+          template: offline-tests
     
       - - name: retag-image
           template: skopeo-retag
@@ -57,6 +63,41 @@ spec:
               value: "{{workflow.parameters.model-version}}"
             - name: alias
               value: "{{workflow.parameters.target-environment}}"
+
+  - name: offline-tests
+    script: 
+      image: python:3.11-slim
+      command: [sh, -c]
+      source: |
+        set -eux
+        
+        REPO_NAME=NYC-Vision-Zero-MLOPS
+        REPO_URL=https://github.com/JadeAnt/${REPO_NAME}.git
+        
+        if [ -d "$REPO_NAME" ]; then
+          echo "Repo already exists. Pulling latest..."
+          cd "$REPO_NAME"
+          git pull
+        else
+          echo "Cloning repo..."
+          git clone "$REPO_URL"
+          cd "$REPO_NAME"
+        fi
+
+        pip install -q -r requirements.txt || echo "No requirements.txt found"
+
+        echo "Running evaluation..."
+        OUTPUT=$(python3 evaluate.py)
+
+        echo "$OUTPUT"
+
+        if echo "$OUTPUT" | grep -q "OFFLINE TEST PASSED"; then
+          echo "Offline evaluation passed."
+          exit 0
+        else
+          echo "Offline evaluation failed."
+          exit 1
+        fi
 
   - name: skopeo-retag
     inputs:
