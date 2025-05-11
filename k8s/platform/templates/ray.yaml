@@ -28,7 +28,7 @@ spec:
               memory: "2Mi"
               cpu: "500m"
             limits:
-              memory: "4Gi"
+              memory: "5Gi"
               cpu: "2"
           env: # get mlflow tracking
             - name: MLFLOW_TRACKING_URI
@@ -87,7 +87,7 @@ spec:
               memory: "0.5Mi"
               cpu: "500m"
             limits:
-              memory: "2Gi"
+              memory: "1Gi"
               cpu: "1"
           env: # get mlflow tracking
             - name: MLFLOW_TRACKING_URI
