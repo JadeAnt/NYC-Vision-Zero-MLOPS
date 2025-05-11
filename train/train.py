@@ -95,8 +95,25 @@ def main():
 
     mlflow.set_tracking_uri("http://10.56.2.49:8000")
 
-    df = ray.get(load_data.remote())
-    df = df.dropna()
+    #df = ray.get(load_data.remote())
+    #df = df.dropna()
+    files = [
+        "processed_2018.csv", "processed_2019.csv", "processed_2020.csv",
+        "processed_2021.csv", "processed_2022.csv", "processed_2023.csv",
+        "processed_2024.csv"
+    ]
+    dfs = []
+    for file in files:
+        try:
+            tdf = pd.read_csv(file, parse_dates=True)
+            dfs.append(tdf)
+        except Exception as e:
+            print(f"[ERROR] Failed to read {file}: {e}")
+    if not dfs:
+        raise ValueError("No CSV files were loaded.")
+        
+    df = pd.concat(dfs, ignore_index=True)
+    
     features = ["intersection_id","accidents_6m","accidents_1y","accidents_5y","YEAR"]
     #X = df.drop(columns=[TARGET_COLUMN])
     df["intersection_id"] = df["intersection_id"].astype("category").cat.codes
