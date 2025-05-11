@@ -96,8 +96,49 @@ def main():
     mlflow.set_tracking_uri("http://10.56.2.49:8000")
 
     df = ray.get(load_data.remote())
-    X, y = preprocess(df)
-    train_and_log_model(X, y)
+    df = df.dropna()
+    features = ["intersection_id","accidents_6m","accidents_1y","accidents_5y","YEAR"]
+    #X = df.drop(columns=[TARGET_COLUMN])
+    df["intersection_id"] = df["intersection_id"].astype("category").cat.codes
+    df["accidents_6m"] = df["accidents_6m"].astype(int)
+    df["accidents_1y"] = df["accidents_1y"].astype(int)
+    df["accidents_5y"] = df["accidents_5y"].astype(int)
+    df["YEAR"] = df["YEAR"].astype(int)
+    X = df[features]
+    y = df[TARGET_COLUMN]
+    mlflow.set_experiment("VisionZeroCrashModel")
+    with mlflow.start_run():
+        tscv = TimeSeriesSplit(n_splits=5)
+        accuracies = []
+
+        # Fixed hyperparameters
+        config = {
+            "n_estimators": 100,
+            "max_depth": 20,
+        }
+
+        for train_index, val_index in tscv.split(X):
+            X_train, X_val = X.iloc[train_index], X.iloc[val_index]
+            y_train, y_val = y.iloc[train_index], y.iloc[val_index]
+
+            rf = RandomForestClassifier(
+                n_estimators=config["n_estimators"],
+                max_depth=config["max_depth"],
+                random_state=42
+            )
+            rf.fit(X_train, y_train)
+            preds = rf.predict(X_val)
+            acc = accuracy_score(y_val, preds)
+            accuracies.append(acc)
+
+        avg_accuracy = sum(accuracies) / len(accuracies)
+
+        # Log to MLflow
+        mlflow.log_params(config)
+        mlflow.log_metric("avg_accuracy", avg_accuracy)
+        mlflow.sklearn.log_model(rf, artifact_path="model", registered_model_name=MODEL_NAME)
+
+        print(f"Average Accuracy: {avg_accuracy:.4f}")
 
 if __name__ == "__main__":
     main()
