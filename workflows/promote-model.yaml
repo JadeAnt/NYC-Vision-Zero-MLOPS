@@ -48,7 +48,15 @@ spec:
             - name: device-name
               value: nyu-rpi5-01
             - name: lease-hours
-              value: "2"          
+              value: "2"
+              
+      - - name: start-fastapi-container
+          when: "{{workflow.parameters.source-environment}} == dev && {{workflow.parameters.target-environment}} == staging"
+          template: start-fastapi-container
+          arguments:
+            parameters:
+            - name: device-name
+              value: nyu-rpi5-01
 
   - name: skopeo-retag
     inputs:
@@ -134,6 +142,49 @@ spec:
       print(f"Lease '{name}' is now active: {l.status}")
       PYCODE
 
+  - name: start-fastapi-container
+    inputs:
+      paramters:
+        - name: device-name
+    metadata:
+      annotations:
+        workflows.argoproj.io/kube-context: chi@edge
+    script:
+      image: python:3.11-slim
+      command: [sh, -eux, -c]
+      env:
+        - name: DEVICE_NAME
+          value: "{{ inputs.parameters.device-name}}"
+        - name: LEASE_NAME
+          value: "serve-edge-project1"
+      source: |
+        python3 - << 'PYCODE'
+        import os
+        from chi import context, lease, container
+
+        context.version = "1.0"
+        context.choose_project()
+        context.choose_site(default="CHI@Edge")
+
+        lease_name = os.getenv("LEASE_NAME")
+        device_name = os.getenv("DEVICE_NAME")
+
+        l = lease.get_lease(lease_name)
+
+        c = container.Container(
+          name=f"node-{lease_name}".replace('_', '-'),
+          reservation_id=l.device_reservations[0]["id"],
+          image_ref="tiangolo/uvicorn-gunicorn-fastapi:python3.9",
+          exposed_ports=[8000],
+        )
+
+        c.submit(idempotent=True)
+        c.associate_floating_ip()
+
+        c.execute("git clone https://github.com/JadeAnt/NYC-Vision-Zero-MLOPS.git")
+        c.execute("mv NYC-Vision-Zero-MLOPS/fastapi work/")
+        PYCODE
+  
   - name: trigger-deploy
     inputs:
       parameters:
