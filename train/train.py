@@ -21,6 +21,7 @@ from ray.tune.schedulers import ASHAScheduler
 TARGET_COLUMN = "future_accidents_6m"
 MODEL_NAME = "CrashModel"
 
+@ray.remote
 def load_data():
     files = [
         "processed_2018.csv", "processed_2019.csv", "processed_2020.csv",
@@ -87,14 +88,14 @@ def train_and_log_model(X, y):
         print(f"Average Accuracy: {avg_accuracy:.4f}")
 
 def main():
-    ray.init(address="auto")  # Ensure we connect to the cluster
+    ray.init(address="auto", runtime_env={"env_vars": {"RAY_memory_usage_threshold": "0.9"}})  # Ensure we connect to the cluster
 
     for node in ray.nodes():
         print(f"Node: {node['NodeManagerAddress']}, Alive: {node['Alive']}, Resources: {node['Resources']}")
 
     mlflow.set_tracking_uri("http://10.56.2.49:8000")
 
-    df = load_data()
+    df = ray.get(load_data().remote())
     X, y = preprocess(df)
     train_and_log_model(X, y)
 
