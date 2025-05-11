@@ -69,7 +69,7 @@ if __name__ == "__main__":
     df = pd.concat(dfs, ignore_index=True)
     
     X, y = preprocess(df)
-    tscv = TimeSeriesSplit(n_splits=2)
+    tscv = TimeSeriesSplit(n_splits=5)
 
     config = {"n_estimators": 100, "max_depth": 10}
     results = []
