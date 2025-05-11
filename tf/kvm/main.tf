@@ -101,7 +101,6 @@ resource "openstack_compute_instance_v2" "chi_edge_node" {
   network {
     port = openstack_networking_port_v2.edge_public_port.id
   }
-*/
 
   user_data = <<-EOF
     #!/bin/bash
@@ -110,6 +109,7 @@ resource "openstack_compute_instance_v2" "chi_edge_node" {
     pip3 install fastapi uvicorn
   EOF
 }
+*/
 
 resource "openstack_networking_floatingip_v2" "edge_floating_ip" {
   provider = openstack.chiedge
