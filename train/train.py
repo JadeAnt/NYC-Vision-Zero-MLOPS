@@ -17,17 +17,17 @@ from ray.tune.search.optuna import OptunaSearch
 from ray.tune.schedulers import ASHAScheduler
 
 # Constants
-DATA_DIR = "/mnt/object"
+#DATA_DIR = "/mnt/object"
 YEAR_FOLDERS = [f"year_{y}" for y in range(2018, 2025)]
 TARGET_COLUMN = "future_accidents_6m"
 MODEL_NAME = "CrashModel"
 
 def load_data():
     #print("Files:", os.listdir(DATA_DIR))
-    print(os.system('ls -R /mnt/object'))
-    print(os.system('df -h'))
-    print(path)
-    print(files)
+   # print(os.system('ls -R /mnt/object'))
+    #print(os.system('df -h'))
+    #print(path)
+    #print(files)
     dfs = []
     for year in YEAR_FOLDERS:
         path = os.path.join(DATA_DIR, year, "*.csv")
