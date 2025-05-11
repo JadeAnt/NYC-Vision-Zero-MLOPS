@@ -26,10 +26,18 @@ def load_data():
     dfs = []
     for year in YEAR_FOLDERS:
         path = os.path.join(DATA_DIR, year, "*.csv")
-        for file in glob(path):
-            df = pd.read_csv(file, parse_dates=True)
-            df["__year"] = year  # For debugging or tracking
-            dfs.append(df)
+        files = glob(path)
+        if not files:
+            print(f"[WARNING] No CSV files found in {path}")
+        for file in files:
+            try:
+                df = pd.read_csv(file, parse_dates=True)
+                df["__year"] = year  # For debugging or tracking
+                dfs.append(df)
+            except Exception as e:
+                print(f"[ERROR] Failed to read {file}: {e}")
+    if not dfs:
+        raise ValueError("No CSV files were loaded. Please check the data directory and file paths.")
     data = pd.concat(dfs, ignore_index=True)
     return data
 
