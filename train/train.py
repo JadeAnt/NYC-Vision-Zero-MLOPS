@@ -55,7 +55,7 @@ def preprocess(df):
 def train_and_log_model(X, y):
     mlflow.set_experiment("VisionZeroCrashModel")
     with mlflow.start_run():
-        tscv = TimeSeriesSplit(n_splits=5)
+        tscv = TimeSeriesSplit(n_splits=2)
         accuracies = []
 
         # Fixed hyperparameters
