@@ -91,6 +91,8 @@ spec:
         volumeMounts:
           - name: repo-volume
             mountPath: /mnt/repo-volume
+          - name: object-storage
+            mountPath: /mnt/object
 
     - name: query-mlflow
       inputs:
