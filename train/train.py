@@ -82,7 +82,7 @@ def train_model(config, X, y):
         tune.report(accuracy=avg_accuracy)
 
 def main():
-    ray.init()
+    ray.init(address="http://10.56.2.49:8265")
 
     register_ray()
 
