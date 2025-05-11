@@ -29,7 +29,7 @@ spec:
               cpu: "250m"
             limits:
               memory: "2Gi"
-              cpu: "500m"
+              cpu: "1m"
           env: # get mlflow tracking
             - name: RAY_memory_usage_threshold
               value: "0.98"
@@ -91,7 +91,7 @@ spec:
               cpu: "250m"
             limits:
               memory: "2Gi"
-              cpu: "500m"
+              cpu: "2m"
           env: # get mlflow tracking
             - name: MLFLOW_TRACKING_URI
               value: http://0.0.0.0:8000
