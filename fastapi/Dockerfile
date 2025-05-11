@@ -11,11 +11,11 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy the application code
 COPY . .
 
-# Ensure the crash severity model file is available inside the container
-COPY crash_model.pkl /app/
+# (Fix filename below)
+COPY crash_model.joblib /app/
 
 # Expose FastAPI port
 EXPOSE 8000
 
-# Command to run FastAPI using Uvicorn
+# Run the FastAPI app with uvicorn
 CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
