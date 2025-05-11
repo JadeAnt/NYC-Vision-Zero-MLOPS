@@ -60,41 +60,78 @@ spec:
           
           echo "[INFO] Install git"
 
+
           apt-get update && \
+
           apt-get install -y git && \
+
           apt-get clean
-          
+
+
           echo "[INFO] Git Clone"
+
           rm -rf /mnt/repo-volume/repo
-          
-          git clone --branch main "https://github.com/JadeAnt/NYC-Vision-Zero-MLOPS.git" /mnt/repo-volume/repo
-          
+
+
+          git clone --branch main
+          "https://github.com/JadeAnt/NYC-Vision-Zero-MLOPS.git"
+          /mnt/repo-volume/repo
+
+
           echo "[INFO] Contents of repo directory:"
-          
+
+
           ls /mnt/repo-volume/repo
 
+
           echo "[INFO] Contents of object storage"
-          
+
+
           ls /mnt/object
-          
+
+          echo "[INFO] Copying files to working dir"
+
+          cp /mnt/object/year_2018/processed_2018.csv /mnt/repo-volume/repo
+
+          cp /mnt/object/year_2019/processed_2019.csv /mnt/repo-volume/repo
+
+          cp /mnt/object/year_2020/processed_2020.csv /mnt/repo-volume/repo
+
+          cp /mnt/object/year_2021/processed_2021.csv /mnt/repo-volume/repo
+
+          cp /mnt/object/year_2022/processed_2022.csv /mnt/repo-volume/repo
+
+          cp /mnt/object/year_2023/processed_2023.csv /mnt/repo-volume/repo
+
+          cp /mnt/object/year_2024/processed_2024.csv /mnt/repo-volume/repo
+
+          echo "[INFO] Files copied. Listing destination contents:" 
+
+          ls /mnt/repo-volume/repo/
+
+
           echo "[INFO] Installing Ray CLI..."
+
 
           pip install --no-cache-dir "ray[default]" 
 
+
           echo "[INFO] Submitting job via Ray CLI..."
+
 
           JOB_ID=$(ray job submit \
             --address http://{{inputs.parameters.ray-head-ip}}:8265 \
-            --working-dir /mnt/repo-volume/repo/train \
+            --working-dir /mnt/repo-volume/repo/  \
             --runtime-env-json='{
               "pip": ["ray","ray[train]", "ray[tune]","mlflow","scikit-learn","joblib","tune-sklearn", "pandas", "scikit-optimize"]
               }'  \
-            -- python train.py)
+            -- python train/train.py)
 
           if [ -z "$JOB_ID" ] || [ "$JOB_ID" = "null" ]; then
             echo "[ERROR] Ray CLI failed to return a job_id" >&2
             exit 1
           fi
+
 
 
           echo "$JOB_ID"
