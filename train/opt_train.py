@@ -25,12 +25,12 @@ def load_csv(file):
 
 def preprocess(df):
     #df = df.dropna()
-    #df["intersection_id"] = df["intersection_id"].astype("category").cat.codes
+    df["intersection_id"] = df["intersection_id"].astype("category").cat.codes
     #df["accidents_6m"] = df["accidents_6m"].astype(int)
     #df["accidents_1y"] = df["accidents_1y"].astype(int)
     #df["accidents_5y"] = df["accidents_5y"].astype(int)
     #df["YEAR"] = df["YEAR"].astype(int)
-    features = ["accidents_6m", "accidents_1y", "accidents_5y"]
+    features = ["intersection_id", "accidents_6m", "accidents_1y", "accidents_5y"]
     X = df[features]
     y = df[TARGET_COLUMN]
     return X, y
@@ -69,7 +69,7 @@ if __name__ == "__main__":
     df = pd.concat(dfs, ignore_index=True)
     
     X, y = preprocess(df)
-    tscv = TimeSeriesSplit(n_splits=5)
+    tscv = TimeSeriesSplit(n_splits=3)
 
     config = {"n_estimators": 100, "max_depth": 10}
     results = []
