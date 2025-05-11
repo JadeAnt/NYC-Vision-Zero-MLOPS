@@ -58,7 +58,7 @@ spec:
         - name: dshm
           emptyDir:
             medium: Memory
-            sizeLimit: 3Gi
+            sizeLimit: 2Gi
         - name: object-storage
           hostPath:
             path: /mnt/object
