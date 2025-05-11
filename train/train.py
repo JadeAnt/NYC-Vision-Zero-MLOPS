@@ -88,7 +88,7 @@ def main():
     #register_ray()
 
     mlflow.set_tracking_uri("http://10.56.2.49:8000")  # Update as needed
-    df = load_data()
+    df = load_data().remote()
     X, y = preprocess(df)
 
     # Hyperparameter search space
