@@ -25,10 +25,10 @@ spec:
           image: rayproject/ray:latest
           resources:
             requests:
-              memory: "768Mi"
+              memory: "1Mi"
               cpu: "500m"
             limits:
-              memory: "1Gi"
+              memory: "2Gi"
               cpu: "1"
           env: # get mlflow tracking
             - name: MLFLOW_TRACKING_URI
