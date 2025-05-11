@@ -25,11 +25,11 @@ spec:
           image: rayproject/ray:latest
           resources:
             requests:
-              memory: "2Gi"
+              memory: "2.5Gi"
               cpu: "500m"
             limits:
               memory: "4Gi"
-              cpu: "3"
+              cpu: "2"
           env: # get mlflow tracking
             - name: RAY_memory_usage_threshold
               value: "0.98"
@@ -63,7 +63,61 @@ spec:
           hostPath:
             path: /mnt/object
             type: Directory
-
+            
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ray-worker
+  namespace: nyc-vision-zero-platform
+spec:
+  replicas: {{ .Values.ray.workerReplicas }}
+  selector:
+    matchLabels:
+      app: ray
+      role: worker
+  template:
+    metadata:
+      labels:
+        app: ray
+        role: worker
+    spec:
+      containers:
+        - name: ray-worker
+          image: rayproject/ray:latest
+          resources:
+            requests:
+              memory: "700Mi"
+              cpu: "500m"
+            limits:
+              memory: "1Gi"
+              cpu: "1"
+          env: # get mlflow tracking
+            - name: MLFLOW_TRACKING_URI
+              value: http://0.0.0.0:8000
+            - name: RAY_GRAFANA_IFRAME_HOST
+              value: http://0.0.0.0:3000
+            - name: RAY_GRAFANA_HOST
+              value: http://grafana.nyc-vision-zero-platform.svc.cluster.local:80
+            - name: RAY_PROMETHEUS_HOST
+              value: http://prometheus.nyc-vision-zero-platform.svc.cluster.local:9090
+          command: ['/bin/sh', '-c']
+          args:
+            - ray start --address=ray-head:6379 --block
+          volumeMounts:
+            - mountPath: /dev/shm
+              name: dshm
+            - mountPath: /mnt/object
+              name: object-storage
+      volumes:
+        - name: dshm
+          emptyDir:
+            medium: Memory
+            sizeLimit: 2Gi
+        - name: object-storage
+          hostPath:
+            path: /mnt/object
+            type: Directory
 ---
 apiVersion: v1
 kind: Service
