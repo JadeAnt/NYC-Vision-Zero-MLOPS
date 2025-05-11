@@ -23,6 +23,7 @@ TARGET_COLUMN = "future_accidents_6m"
 MODEL_NAME = "CrashModel"
 
 def load_data():
+    print("Files:", os.listdir(DATA_DIR))
     dfs = []
     for year in YEAR_FOLDERS:
         path = os.path.join(DATA_DIR, year, "*.csv")
