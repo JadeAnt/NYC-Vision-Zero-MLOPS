@@ -65,9 +65,21 @@ data "openstack_networking_secgroup_v2" "allow_8265" {
 
 # --- CHI@Edge Section ---
 
+/*
 data "openstack_networking_network_v2" "edge_sharednet2" {
   provider = openstack.chiedge
   name     = "sharednet2"
+}
+*/
+
+data "openstack_networking_network_v2" "edge_public" {
+  provider = openstack.chiedge
+  name     = "public"
+}
+
+data "openstack_networking_network_v2" "edge_caliconet" {
+  provider = openstack.chiedge
+  name     = "caliconet"
 }
 
 data "openstack_networking_secgroup_v2" "edge_allow_ssh" {
