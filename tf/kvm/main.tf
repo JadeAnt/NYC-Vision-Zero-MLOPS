@@ -76,7 +76,7 @@ resource "openstack_networking_floatingip_v2" "floating_ip" {
 
 resource "openstack_networking_port_v2" "edge_sharednet2_port" {
   provider   = openstack.chiedge
-  name       = "chi-edge-port-${var.chi_suffix}"
+  name       = "chi-edge-port-${var.suffix}"
   network_id = data.openstack_networking_network_v2.edge_sharednet2.id
   security_group_ids = [
     data.openstack_networking_secgroup_v2.allow_ssh.id,
@@ -86,7 +86,7 @@ resource "openstack_networking_port_v2" "edge_sharednet2_port" {
 
 resource "openstack_compute_instance_v2" "chi_edge_node" {
   provider    = openstack.chiedge
-  name        = "chi-edge-${var.chi_suffix}"
+  name        = "chi-edge-${var.suffix}"
   image_name  = "CC-Ubuntu24.04"                  # May need to change
   flavor_name = "arm.rpi5"                        # May need to change
   key_pair    = var.key
