@@ -102,19 +102,25 @@ def main():
         "processed_2021.csv", "processed_2022.csv", "processed_2023.csv",
         "processed_2024.csv"
     ]
-    dfs = []
+
+    print("Loading data")
+    #dfs = []
+    
     for file in files:
         try:
-            tdf = pd.read_csv(file, parse_dates=True)
-            dfs.append(tdf)
+            df = pd.read_csv(file, parse_dates=True)
+            #dfs.append(tdf)
         except Exception as e:
             print(f"[ERROR] Failed to read {file}: {e}")
     if not dfs:
         raise ValueError("No CSV files were loaded.")
         
-    df = pd.concat(dfs, ignore_index=True)
+    #df = pd.concat(dfs, ignore_index=True)
+    #data = data.sample(frac=0.3, random_state=42) 
     
-    features = ["intersection_id","accidents_6m","accidents_1y","accidents_5y","YEAR"]
+    print("Preprocessing")
+    
+    features = ["intersection_id","accidents_6m","accidents_1y","accidents_5y"]
     #X = df.drop(columns=[TARGET_COLUMN])
     df["intersection_id"] = df["intersection_id"].astype("category").cat.codes
     df["accidents_6m"] = df["accidents_6m"].astype(int)
