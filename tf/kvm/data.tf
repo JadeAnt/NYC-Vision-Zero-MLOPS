@@ -50,3 +50,20 @@ data "openstack_networking_secgroup_v2" "allow_3000" {
 data "openstack_networking_secgroup_v2" "allow_8265" {
   name = "allow-8265"
 }
+
+# --- CHI@Edge Section ---
+
+data "openstack_networking_network_v2" "edge_sharednet2" {
+  provider = openstack.chiedge
+  name     = "sharednet2"
+}
+
+data "openstack_networking_secgroup_v2" "edge_allow_ssh" {
+  provider = openstack.chiedge
+  name     = "allow-ssh"
+}
+
+data "openstack_networking_secgroup_v2" "edge_allow_8000" {
+  provider = openstack.chiedge
+  name     = "allow-8000"
+}
