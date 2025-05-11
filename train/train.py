@@ -24,7 +24,7 @@ MODEL_NAME = "CrashModel"
 
 def load_data():
     #print("Files:", os.listdir(DATA_DIR))
-    print(os.system('ls -l'))
+    print(os.system('ls -R ./mnt/object'))
     print(os.system('df -h'))
     dfs = []
     for year in YEAR_FOLDERS:
