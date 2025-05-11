@@ -26,6 +26,8 @@ def load_data():
     #print("Files:", os.listdir(DATA_DIR))
     print(os.system('ls -R /mnt/object'))
     print(os.system('df -h'))
+    print(path)
+    print(files)
     dfs = []
     for year in YEAR_FOLDERS:
         path = os.path.join(DATA_DIR, year, "*.csv")
