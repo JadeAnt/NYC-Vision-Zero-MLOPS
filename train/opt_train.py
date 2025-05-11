@@ -87,7 +87,20 @@ if __name__ == "__main__":
 
         for key, value in avg_metrics.items():
             mlflow.log_metric(f"avg_{key}", value)
+            
+        rf = RandomForestClassifier(
+            n_estimators=config["n_estimators"],
+            max_depth=config["max_depth"],
+            random_state=42
+        )
 
+        rf.fit(X,y)
+        
+        mlflow.sklearn.log_model(
+            sk_model=rf,
+            artifact_path="model",
+            registered_model_name=MODEL_NAME,
+        )
         client = MlflowClient()
         model_uri = f"runs:/{run.info.run_id}/model"
         registered_model = mlflow.register_model(model_uri=model_uri, name=MODEL_NAME)
