@@ -22,7 +22,7 @@ from ray.tune.schedulers import ASHAScheduler
 TARGET_COLUMN = "future_accidents_6m"
 MODEL_NAME = "CrashModel"
 
-@ray.remote(num_cpus=0.5, memory=500*1024*1024)  # 500 MB
+#@ray.remote(num_cpus=0.5, memory=500*1024*1024)  # 500 MB
 def load_data():
     #print("Files:", os.listdir(DATA_DIR))
    # print(os.system('ls -R /mnt/object'))
@@ -88,7 +88,7 @@ def main():
     #register_ray()
 
     mlflow.set_tracking_uri("http://10.56.2.49:8000")  # Update as needed
-    df = load_data().remote()
+    df = load_data()
     X, y = preprocess(df)
 
     # Hyperparameter search space
