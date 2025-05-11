@@ -13,6 +13,24 @@ spec:
   templates:
   - name: promote-flow
     steps:
+      - - name: bring-up-edge-pi
+          when: "{{workflow.parameters.source-environment}} == dev && {{workflow.parameters.target-environment}} == staging"
+          template: bring-up-edge-pi
+          arguments:
+            parameters:
+            - name: device-name
+              value: nyu-rpi5-01
+            - name: lease-hours
+              value: "2"
+              
+      - - name: start-fastapi-container
+          when: "{{workflow.parameters.source-environment}} == dev && {{workflow.parameters.target-environment}} == staging"
+          template: start-fastapi-container
+          arguments:
+            parameters:
+            - name: device-name
+              value: nyu-rpi5-01
+    
       - - name: retag-image
           template: skopeo-retag
           arguments:
@@ -39,24 +57,6 @@ spec:
               value: "{{workflow.parameters.model-version}}"
             - name: alias
               value: "{{workflow.parameters.target-environment}}"
-
-      - - name: bring-up-edge-pi
-          when: "{{workflow.parameters.source-environment}} == dev && {{workflow.parameters.target-environment}} == staging"
-          template: bring-up-edge-pi
-          arguments:
-            parameters:
-            - name: device-name
-              value: nyu-rpi5-01
-            - name: lease-hours
-              value: "2"
-              
-      - - name: start-fastapi-container
-          when: "{{workflow.parameters.source-environment}} == dev && {{workflow.parameters.target-environment}} == staging"
-          template: start-fastapi-container
-          arguments:
-            parameters:
-            - name: device-name
-              value: nyu-rpi5-01
 
   - name: skopeo-retag
     inputs:
@@ -144,7 +144,7 @@ spec:
 
   - name: start-fastapi-container
     inputs:
-      paramters:
+      parameters:
         - name: device-name
     metadata:
       annotations:
