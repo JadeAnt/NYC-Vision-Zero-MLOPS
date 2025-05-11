@@ -87,6 +87,8 @@ def train_and_log_model(X, y):
 
         print(f"Average Accuracy: {avg_accuracy:.4f}")
 
+
+@ray.remote(num_cpus=2)
 def main():
     ray.init(address="auto", runtime_env={"env_vars": {"RAY_memory_usage_threshold": "0.9"}})  # Ensure we connect to the cluster
 
@@ -189,4 +191,4 @@ def main():
         print(f"Average F1 Score: {avg_f1:.4f}")
 
 if __name__ == "__main__":
-    main()
+    main.remote()
