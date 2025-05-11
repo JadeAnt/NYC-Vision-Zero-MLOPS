@@ -1,4 +1,5 @@
 provider "openstack" {
+  alias  = "kvm"
   cloud = "openstack"
 }
 
