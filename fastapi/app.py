@@ -5,39 +5,35 @@ import joblib
 
 # Initialize FastAPI app
 app = FastAPI(
-    title="Crash Severity Prediction API",
-    description="API for predicting crash severity based on input features",
+    title="Intersection Crash Forecast API",
+    description="Predicts number of accidents at an intersection in the next 6 months",
     version="1.0.0"
 )
 
 # Load the trained model
-model = joblib.load("crash_model.joblib")  # Make sure the filename matches
+model = joblib.load("crash_model.joblib")  # Update path if needed
 
-# Define the input data structure
-class AccidentDetails(BaseModel):
-    weather_condition: int
-    road_surface: int
-    light_condition: int
-    vehicle_count: int
-    pedestrian_involved: bool
-    speed_limit: float
+# Define input data structure
+class IntersectionFeatures(BaseModel):
+    intersection_id: int
+    accidents_6m: int
+    accidents_1y: int
+    accidents_5y: int
 
-# Health check/test endpoint
+# Health check
 @app.get("/test")
 async def root():
-    return {"message": "Hello World"}
+    return {"message": "FastAPI is running"}
 
 # Prediction endpoint
 @app.post("/predict")
-def predict(details: AccidentDetails):
+def predict(data: IntersectionFeatures):
     input_data = np.array([[
-        details.weather_condition,
-        details.road_surface,
-        details.light_condition,
-        details.vehicle_count,
-        int(details.pedestrian_involved),  # Convert bool to int
-        details.speed_limit
+        data.intersection_id,
+        data.accidents_6m,
+        data.accidents_1y,
+        data.accidents_5y
     ]])
 
     prediction = model.predict(input_data)
-    return {"predicted_severity": int(prediction[0])}
+    return {"predicted_future_accidents_6m": float(prediction[0])}
