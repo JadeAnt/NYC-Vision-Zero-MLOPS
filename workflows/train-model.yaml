@@ -91,23 +91,23 @@ spec:
 
           echo "[INFO] Copying files to working dir"
 
-          cp /mnt/object/year_2018/processed_2018.csv /mnt/repo-volume/repo/train
+          cp /mnt/object/year_2018/processed_2018.csv /mnt/repo-volume/repo/train/
 
-          cp /mnt/object/year_2019/processed_2019.csv /mnt/repo-volume/repo/train
+          cp /mnt/object/year_2019/processed_2019.csv /mnt/repo-volume/repo/train/
 
-          cp /mnt/object/year_2020/processed_2020.csv /mnt/repo-volume/repo/train
+          cp /mnt/object/year_2020/processed_2020.csv /mnt/repo-volume/repo/train/
 
-          cp /mnt/object/year_2021/processed_2021.csv /mnt/repo-volume/repo/train
+          cp /mnt/object/year_2021/processed_2021.csv /mnt/repo-volume/repo/train/
 
-          cp /mnt/object/year_2022/processed_2022.csv /mnt/repo-volume/repo/train
+          cp /mnt/object/year_2022/processed_2022.csv /mnt/repo-volume/repo/train/
 
-          cp /mnt/object/year_2023/processed_2023.csv /mnt/repo-volume/repo/train
+          cp /mnt/object/year_2023/processed_2023.csv /mnt/repo-volume/repo/train/
 
-          cp /mnt/object/year_2024/processed_2024.csv /mnt/repo-volume/repo/train
+          cp /mnt/object/year_2024/processed_2024.csv /mnt/repo-volume/repo/train/
 
           echo "[INFO] Files copied. Listing destination contents:" 
 
-          ls /mnt/repo-volume/repo/
+          ls /mnt/repo-volume/repo/train/
 
 
           echo "[INFO] Installing Ray CLI..."
