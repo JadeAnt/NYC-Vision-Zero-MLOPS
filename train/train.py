@@ -106,8 +106,6 @@ def main():
     tuner = tune.Tuner(
         tune.with_parameters(train_model, X=X, y=y),
         tune_config=tune.TuneConfig(
-            metric="accuracy",
-            mode="max",
             scheduler=scheduler,
             search_alg=search_alg,
             num_samples=10,
