@@ -80,13 +80,13 @@ resource "openstack_networking_floatingip_v2" "floating_ip" {
 
 # --- Chi@Edge Section ---
 
-resource "openstack_networking_port_v2" "edge_sharednet2_port" {
+resource "openstack_networking_port_v2" "edge_public_port" {
   provider   = openstack.chiedge
   name       = "chi-edge-port-${var.suffix}"
-  network_id = data.openstack_networking_network_v2.edge_sharednet2.id
+  network_id = data.openstack_networking_network_v2.edge_public.id
   security_group_ids = [
-    data.openstack_networking_secgroup_v2.allow_ssh.id,
-    data.openstack_networking_secgroup_v2.allow_8000.id        # FastAPI
+    data.openstack_networking_secgroup_v2.edge_allow_ssh.id,
+    data.openstack_networking_secgroup_v2.edge_allow_8000.id        # FastAPI
   ]
 }
 
@@ -98,7 +98,7 @@ resource "openstack_compute_instance_v2" "chi_edge_node" {
   key_pair    = var.key
 
   network {
-    port = openstack_networking_port_v2.edge_sharednet2_port.id
+    port = openstack_networking_port_v2.edge_public_port.id
   }
 
   user_data = <<-EOF
@@ -112,7 +112,7 @@ resource "openstack_compute_instance_v2" "chi_edge_node" {
 resource "openstack_networking_floatingip_v2" "edge_floating_ip" {
   provider = openstack.chiedge
   pool     = "public"
-  port_id  = openstack_networking_port_v2.edge_sharednet2_port.id
+  port_id  = openstack_networking_port_v2.edge_public_port.id
 }
 
 
