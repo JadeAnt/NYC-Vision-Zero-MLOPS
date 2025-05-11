@@ -123,7 +123,7 @@ spec:
             --address http://{{inputs.parameters.ray-head-ip}}:8265 \
             --working-dir /mnt/repo-volume/repo/  \
             --runtime-env-json='{
-              "pip": ["ray","ray[train]", "ray[tune]","mlflow","scikit-learn","joblib","tune-sklearn", "pandas", "scikit-optimize"]
+              "pip": ["ray","ray[train]", "ray[tune]","mlflow","scikit-learn","joblib","tune-sklearn", "pandas", "scikit-optimize", "optuna"]
               }'  \
             -- python train/train.py)
 
