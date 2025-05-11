@@ -3,6 +3,7 @@ from pydantic import BaseModel
 import numpy as np
 import joblib
 import hashlib
+import os
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -10,6 +11,8 @@ app = FastAPI(
     description="Predicts number of accidents at an intersection in the next 6 months",
     version="1.0.0"
 )
+
+MOUNT_DIR = os.getenv("MOUNT_DIR", "/mnt/chi_data")
 
 # Load the trained model
 model = joblib.load("crash_model.joblib")  # Update path if needed
@@ -44,7 +47,26 @@ def predict(data: IntersectionFeatures):
     elif(float(prediction[0]) > 3):
         label = "Dangerous"
 
-    return {
+    prediction_result = {
         "predicted_future_accidents_6m": float(prediction[0]),
         "label_classification" : label
-   }
+    }
+
+    dir_listing = {}
+    if not os.path.exists(MOUNT_DIR):
+        dir_listing = {"error": f"Mount directory {MOUNT_DIR} does not exist."}
+    else:
+        try:
+            entries = os.listdir(MOUNT_DIR)
+            directories = [entry for entry in entries if os.path.isdir(os.path.join(MOUNT_DIR, entry))]
+            dir_listing = {
+                "mounted_at": MOUNT_DIR,
+                "directories": directories,
+                "all_entries_in_mount": entries
+            }
+        except Exception as e:
+            dir_listing = {"error": f"Failed to list directories in {MOUNT_DIR}: {str(e)}"}
+
+    combined_response = {**prediction_result, "directory_info": dir_listing}
+    
+    return combined_response
