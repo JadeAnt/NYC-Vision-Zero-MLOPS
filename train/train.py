@@ -38,7 +38,7 @@ def load_data():
     for file in files:
         try:
             df = pd.read_csv(file, parse_dates=True)
-            df["__year"] = year  # For debugging or tracking
+            #df["__year"] = year  # For debugging or tracking
             dfs.append(df)
         except Exception as e:
             print(f"[ERROR] Failed to read {file}: {e}")
