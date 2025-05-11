@@ -4,7 +4,7 @@ import pandas as pd
 from glob import glob
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import TimeSeriesSplit
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 import joblib
 
 import mlflow
@@ -95,6 +95,8 @@ def main():
 
     mlflow.set_tracking_uri("http://10.56.2.49:8000")
 
+    # Enable MLflow autologging for scikit-learn
+    mlflow.sklearn.autolog()
     #df = ray.get(load_data.remote())
     #df = df.dropna()
     files = [
@@ -130,7 +132,7 @@ def main():
     mlflow.set_experiment("VisionZeroCrashModel")
     with mlflow.start_run():
         tscv = TimeSeriesSplit(n_splits=5)
-        accuracies = []
+        accuracies, precisions, recalls, f1s = [], [], [], []
 
         # Fixed hyperparameters
         config = {
@@ -150,16 +152,41 @@ def main():
             rf.fit(X_train, y_train)
             preds = rf.predict(X_val)
             acc = accuracy_score(y_val, preds)
+            pres = precision_score(y_val, preds)
+            rec = recall_score(y_val, preds)
+            f1 = f1_score(y_val, preds)
             accuracies.append(acc)
+            precisions.append(pres)
+            recalls.append(rec)
+            f1s.append(f1)
 
         avg_accuracy = sum(accuracies) / len(accuracies)
+        avg_precision = sum(precisions) / len(precisions)
+        avg_recall = sum(recalls) / len(recalls)
+        avg_f1 = sum(f1s) / len(f1s)
 
         # Log to MLflow
+        client = MlflowClient()
+        model_uri = f"runs:/{run.info.run_id}/model"
+        registered_model = mlflow.register_model(model_uri=model_uri, name=MODEL_NAME)
+
+        client.set_registered_model_alias(
+            name=MODEL_NAME,
+            alias="development",
+            version=registered_model.version
+        )
+        print(f"[INFO] Registered model as version {registered_model.version} with alias 'development'")
         mlflow.log_params(config)
         mlflow.log_metric("avg_accuracy", avg_accuracy)
+        mlflow.log_metric("avg_precision", avg_precision)
+        mlflow.log_metric("avg_recalls", avg_recall)
+        mlflow.log_metric("avg_f1_score", avg_f1)
         mlflow.sklearn.log_model(rf, artifact_path="model", registered_model_name=MODEL_NAME)
 
         print(f"Average Accuracy: {avg_accuracy:.4f}")
+        print(f"Average Precision: {avg_precision:.4f}")
+        print(f"Average Recall: {avg_recall:.4f}")
+        print(f"Average F1 Score: {avg_f1:.4f}")
 
 if __name__ == "__main__":
     main()
