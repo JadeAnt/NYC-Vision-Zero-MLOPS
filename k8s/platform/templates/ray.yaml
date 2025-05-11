@@ -23,6 +23,13 @@ spec:
       containers:
         - name: ray-head
           image: rayproject/ray:latest
+          resources:
+            requests:
+              memory: "4Gi"
+              cpu: "2"
+            limits:
+              memory: "4Gi"
+              cpu: "2"
           env: # get mlflow tracking
             - name: MLFLOW_TRACKING_URI
               value: http://0.0.0.0:8000
@@ -75,6 +82,13 @@ spec:
       containers:
         - name: ray-worker
           image: rayproject/ray:latest
+          resources:
+            requests:
+              memory: "4Gi"
+              cpu: "2"
+            limits:
+              memory: "4Gi"
+              cpu: "2"
           env: # get mlflow tracking
             - name: MLFLOW_TRACKING_URI
               value: http://0.0.0.0:8000
