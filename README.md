@@ -179,6 +179,7 @@ optional "difficulty" points you are attempting. -->
     - [Grafana dashboards](/k8s/platform/templates/grafana.yaml): Uses ⁠ /mnt/block/grafana_data ⁠ for persistent visualization configurations
     - [MLflow tracking](/k8s/platform/templates/mlflow.yaml): Uses MinIO for artifact storage with PostgreSQL backend for metadata
   - This persistent storage architecture ensures data durability across container restarts and node failures, with all critical artifacts preserved
+
 •⁠  ⁠Offline Data Pipeline:  
   - Data Sources:  
     - NYC Motor Vehicle Collisions - Crashes (sourced via NYC OpenData API)
