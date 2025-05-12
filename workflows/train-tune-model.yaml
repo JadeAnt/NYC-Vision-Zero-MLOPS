@@ -1,0 +1,198 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: train-model
+spec:
+  entrypoint: training-and-build
+  volumeClaimTemplates:
+    - metadata:
+        name: repo-volume
+      spec:
+        accessModes: ['ReadWriteOnce']
+        resources:
+          requests:
+            storage: 2Gi
+  volumes:
+    - name: object-storage
+      hostPath:
+        path: /mnt/object
+        type: Directory
+  arguments:
+    parameters:
+      - name: ray-head-ip
+      - name: mlflow-uri
+
+  templates:
+    - name: training-and-build
+      steps:
+        - - name: submit-ray-job
+            template: submit-ray-job
+            arguments:
+              parameters:
+                - name: ray-head-ip
+                  value: '{{workflow.parameters.ray-head-ip}}'
+        - - name: query-mlflow
+            template: query-mlflow
+            arguments:
+              parameters:
+                - name: mlflow-uri
+                  value: '{{workflow.parameters.mlflow-uri}}'
+                - name: model-name
+                  value: 'CrashModel'
+        - - name: build-container
+            template: trigger-build
+            arguments:
+              parameters:
+                - name: model-version
+                  value: '{{steps.query-mlflow.outputs.result}}'
+            #when: "{{steps.query-mlflow.outputs.result}} != ''"
+
+    - name: submit-ray-job
+      inputs:
+        parameters:
+          - name: ray-head-ip
+      script:
+        image: python:3.10-slim
+        command: [sh] # changed [sh, -c] to [sh]
+        source: |
+          set -e
+
+
+          echo "[INFO] Install git"
+
+
+          apt-get update && \
+
+          apt-get install -y git && \
+
+          apt-get clean
+
+
+          echo "[INFO] Git Clone"
+
+          rm -rf /mnt/repo-volume/repo
+
+
+          git clone --branch main "https://github.com/JadeAnt/NYC-Vision-Zero-MLOPS.git" /mnt/repo-volume/repo
+
+
+          echo "[INFO] Contents of repo directory:"
+
+
+          ls /mnt/repo-volume/repo
+
+
+          echo "[INFO] Contents of object storage"
+
+
+          ls /mnt/object
+
+          echo "[INFO] Copying files to working dir"
+
+          cp /mnt/object/year_2018/processed_2018.csv /mnt/repo-volume/repo/train/
+
+          cp /mnt/object/year_2019/processed_2019.csv /mnt/repo-volume/repo/train/
+
+          cp /mnt/object/year_2020/processed_2020.csv /mnt/repo-volume/repo/train/
+
+          cp /mnt/object/year_2021/processed_2021.csv /mnt/repo-volume/repo/train/
+
+          cp /mnt/object/year_2022/processed_2022.csv /mnt/repo-volume/repo/train/
+
+          cp /mnt/object/year_2023/processed_2023.csv /mnt/repo-volume/repo/train/
+
+          cp /mnt/object/year_2024/processed_2024.csv /mnt/repo-volume/repo/train/
+
+          echo "[INFO] Files copied. Listing destination contents:" 
+
+          ls /mnt/repo-volume/repo/train/
+
+
+          echo "[INFO] Installing Ray CLI..."
+
+
+          pip install --no-cache-dir "ray[default]" 
+
+
+          echo "[INFO] Submitting job via Ray CLI..."
+
+
+          JOB_ID=$(ray job submit \
+            --address http://{{inputs.parameters.ray-head-ip}}:8265 \
+            --working-dir /mnt/repo-volume/repo/train  \
+            --runtime-env-json='{
+              "pip": ["ray","ray[train]", "ray[tune]","mlflow","scikit-learn","joblib","tune-sklearn", "pandas", "scikit-optimize", "optuna"]
+              }'  \
+            -- python train_tune.py)
+
+          if [ -z "$JOB_ID" ] || [ "$JOB_ID" = "null" ]; then
+            echo "[ERROR] Ray CLI failed to return a job_id" >&2
+            exit 1
+          fi
+
+
+
+          echo "$JOB_ID"
+        volumeMounts:
+          - name: repo-volume
+            mountPath: /mnt/repo-volume
+          - name: object-storage
+            mountPath: /mnt/object
+
+    - name: query-mlflow
+      inputs:
+        parameters:
+          - name: mlflow-uri
+          - name: model-name
+      script:
+        image: python:3.10-slim
+        command: [sh, -c]
+        source: |
+          set -e
+          pip install --no-cache-dir requests
+          python3 <<EOF
+          import requests
+
+          mlflow_uri = "{{inputs.parameters.mlflow-uri}}"
+          model_name = "{{inputs.parameters.model-name}}"
+
+
+          response = requests.get(
+              f"{mlflow_uri}/api/2.0/mlflow/model-versions/search",
+              headers={"Content-Type": "application/json"},
+              params={"filter": f"name='{model_name}'", "max_results": 1}
+          )
+
+          response.raise_for_status()
+          data = response.json()
+          if not data.get("model_versions"):
+              raise RuntimeError("No model versions found")
+
+          version = data["model_versions"][0]["version"]
+          EOF
+          echo "$version" > /tmp/model_version.txt
+      outputs:
+        parameters:
+          - name: result
+            valueFrom:
+              path: /tmp/model_version.txt
+
+    - name: trigger-build
+      inputs:
+        parameters:
+          - name: model-version
+      resource:
+        action: create
+        manifest: |
+          apiVersion: argoproj.io/v1alpha1
+          kind: Workflow
+          metadata:
+            generateName: build-container-image-
+            namespace: argo
+          spec:
+            workflowTemplateRef:
+              name: build-container-image
+            arguments:
+              parameters:
+                - name: model-version
+                  value: "{{inputs.parameters.model-version}}"
