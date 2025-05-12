@@ -164,34 +164,31 @@ and which optional "difficulty" points you are attempting. -->
 #### Model serving and monitoring platforms
 
 (1) Strategy:
-We will serve the trained model using a FastAPI-based REST API. This API will be containerized using Docker and deployed on a Chameleon VM with a floating IP. The endpoint will accept input data and return a risk classification label along with a confidence score. This service will be accessible by the front-end dashboard for real-time prediction.
+We serve the trained model using a [FastAPI-based REST API](https://github.com/JadeAnt/NYC-Vision-Zero-MLOPS/tree/main/fastapi). This API is containerized using Docker and deployed within KVM@TACC on our staging, canary, and production endpoints. The workflow to build the container image to be deployed can be found [here](https://github.com/JadeAnt/NYC-Vision-Zero-MLOPS/blob/main/workflows/build-container-image.yaml). 
 
-Since the model is expected to run on an edge device (e.g., Rasberry Pi 5), it must be both small and fast. We will explore model-level optimizations including dynamic and static quantization, pruning, and possibly reduced-precision conversion. We may also explore graph optimizations using TorchScript or ONNX.
+To deploy the container image when needed we also created an additional [deploy container image workflow](https://github.com/JadeAnt/NYC-Vision-Zero-MLOPS/blob/main/workflows/deploy-container-image.yaml).
 
-Once deployed, we will define and run an automated offline evaluation suite. This includes metrics like accuracy, precision, recall, F1-score, and ROC-AUC, along with slice-based analysis (e.g., by borough or time). Known failure modes (e.g., holidays, traffic spikes) will be tested, and results will be logged to MLflow.
+The endpoint will accept input data and return a risk classification label along with a confidence score. Since the model is expected to run on an edge device (e.g., Rasberry Pi 5), it must be both small and fast. These were some things we took into account when we were training the model. 
 
-Following staging deployment, we will conduct load testing using synthetic input data to measure system latency, throughput, and failure rate. After staging passes, we will run a canary evaluation using simulated users sending live-like inputs to the API. These predictions will be logged and compared with labeled data (as available) for quality checks.
+This edge device is also brought up and utilized to perform our offline evaluation, within a container on a rasberrypi5 as can be seen [here](https://github.com/JadeAnt/NYC-Vision-Zero-MLOPS/tree/main/edge).
+Once deployed, we run an automated offline evaluation suite. This includes metrics like accuracy, precision, recall, and F1-score.
 
-To close the loop, predictions from production use will be logged, a subset labeled, and added to the training dataset for weekly re-training. This process will be integrated into our CI/CD pipeline.
+Following staging deployment, we conduct testing using synthetic input data to measure system latency, throughput, and failure rate. After staging passes, we run a canary evaluation using simulated users sending live-like inputs to the API. Each step is ran through the [promote-model workflow](https://github.com/JadeAnt/NYC-Vision-Zero-MLOPS/blob/main/workflows/promote-model.yaml). 
+
+We used [Prometheus](https://github.com/JadeAnt/NYC-Vision-Zero-MLOPS/blob/main/k8s/platform/templates/prometheus.yaml) and [Grafana](https://github.com/JadeAnt/NYC-Vision-Zero-MLOPS/blob/main/k8s/platform/templates/grafana.yaml) within kubernetes cluster, for monitoring the state of our systems. 
+
+To close the loop, predictions from production use will be logged, a subset labeled, and added to the training dataset for weekly re-training. We can trigger this retraining script from the retrain model workflow to train only on the production bucket.
 
 (2) Diagram Description:
-- The user or dashboard sends input data to a FastAPI endpoint.
+
+- The user sends input data to a FastAPI endpoint.
 - The API loads the trained model, runs inference, and returns a prediction.
-- Inputs and predictions are logged in real-time.
-- Evaluation and monitoring scripts analyze logs for drift or degradation.
-- MLFlow stores evaluation results and alerts trigger retraining if needed.
-- A dashboard (e.g., Streamlit or Grafana) visualizes model health and alerts.
 
 (3) Justification:
 Serving the model via a REST API enables seamless integration with the frontend and supports scalable deployment. Edge-device constraints require us to optimize for size and latency. Continuous evaluation ensures the model remains accurate, fair, and robust over time, even as real-world conditions change.
 
 (4) Lecture Material Reference:
 This section directly aligns with Units 6 and 7. Unit 6 emphasized serving models efficiently and optimizing for performance, especially on constrained devices. Unit 7 introduced strategies for offline evaluation, load testing, canary deployments, and feedback loops to ensure model quality and responsiveness in production.
-
-(5) Difficulty Points (Optional):
-<!-- - Multi-platform serving: We plan to evaluate model performance on CPU, GPU, and edge devices. -->
-- Monitor for data drift: We will compare real-time input distributions to training data using statistical methods (e.g., KS-test).
-<!-- - Monitor for model degradation: We will track prediction quality over time and implement a dashboard to alert on degradation. Retraining will be automatically triggered when necessary using new production-labeled data. -->
 
 #### Data pipeline
 
