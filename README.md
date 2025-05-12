@@ -74,7 +74,7 @@ The table below shows an example, it is not a recommendation. -->
 | Floating IPs    | 4 for entire project duration, 1 for sporadic use |        Needed for our networking to connect our resources and shared information across the network. Require 1 for each person and 1 for sporadic use       |
 | `Rasberry-Pi 5` | 1 for entire project duration, 2 hour block twice a week |     As our deployments are on-device focused, an edge device is needed to allow us to test the efficiency of our model and pipeline. Both our canary and production environments will require an edge device for testing artifical users.        |
 
-### Detailed design plan
+### Project Overview and Detailed design plan
 
 <!-- In each section, you should describe (1) your strategy, (2) the relevant parts of the 
 diagram, (3) justification for your strategy, (4) relate back to lecture material, 
@@ -85,51 +85,51 @@ diagram, (3) justification for your strategy, (4) relate back to lecture materia
 <!-- Make sure to clarify how you will satisfy the Unit 4 and Unit 5 requirements, 
 and which optional "difficulty" points you are attempting. -->
 (1) Strategy
-- Begin with exploratory data analysis to analyze the data, clean it, and find the features we hypothesize will be the best to work with starting out, before moving on to testing feature selection based methods
-- Train, retrain, and test various different machine learning models in order to find which performs the best for our multi-classification based problem. 
-  - Some models we would test for example might be (SVM, Random Forest, Decision Tree, Regression (feature selection) etc…)
-  - If we do use multiple models, it will most likely be Regression for feature Selection + a classification model. In case of change in relevant features
-  - Compare the results of each of the models and choose one, or more, models for our final output
-- Track the experiments we perform with each of these models using the MLFlow platform
-  - Ran in a separate container with volume, with the dataset split into train, valid, test, and production sets
-  - Saving the details of each run such using checkpointing to record version, hyperparameters, loss/metrics, alert for errors, and monitor the health of our hardware and software
-- Schedule training jobs using a Ray cluster for our continuous pipeline
-  - Using a head node to schedule/manage jobs, data, and serve a dashboard with 2 worker nodes. 
-  - Will Use MinIO object store for persistent job storage and save model checkpoints here as well in case of error or interruption
-  - Create a separate Jupyter notebook container to submit jobs to cluster through
-  - Prometheus and Grafana will be used for metric collection and dashboard visualization
-
+- We began with exploratory data analysis to analyze our [Motor Vehicles Crashes dataset]() , clean it, and found the features we hypothesized would be the best to work with starting out
+- We decided on using the features of [’intersection_id’, ’accidents_6m’, ’accidents_1y’, ’accidents_5y’] as our model input
+  - ’intersection_id’ = The combination of the on street and off street names of the intersection the crash occured
+  - ’accidents_6m’ = The amount of accidents that occured in the last 6 months
+  - ’accidents_1y’ = The amount of accidents that occured in the last 1 year
+  - ’accidents_5y’ = The amount of accidents that occured in the last 5 years
+- We chose our target variable to be based on the amount of accidents in the next 6 months or 'future_accidents_6m', as this seemed like the best time window to allow our model to make an informed prediction using our historical data.
+- We trained, retrained, and tested various different machine learning models in order to find which performs the best for our multi-classification based problem and finally decided on a RandomForestClassifier Model called [crash_model.joblib]().
+- Due to the nature of the data we had to incorporate a TimeSeriesSplit, as all of our data is ordered historically. This was critically important as this prevented our model from using future data points, or data it wouldnt have access to at its prediction time.
+- To Track the experiments we performed with we used the MLFlow and Minio platforms
+  - For our experiment tracking we utilized [MLFlow]() and saved any model artifacts within [Minio]()
+    - Ran within our kubernetes cluster as defined by our configuration files
+    - Saving the details of each run such using checkpointing to record accuracy, precision, recall, and f1_scores
+    - This was critical as, due to the threat of prediction by mode, our model was in danger of simply using the most predicted class and overfitting to that. Leading to deceptively high accuracies. As such, accuracy was not the most important metric for us to look at and instead we decided to look at precision, recall, and f1 scores to best determine how the model best measured the accuracy of predictions and finding relavant instances of that prediciton.
+- We scheduled training jobs using a Ray cluster for our continuous pipeline
+  - Our [Ray]() Cluster is used to submit training jobs using our [training]() and [retraining]() scripts
+  - Using a head node to schedule/manage jobs, data, and serve a dashboard with 3 worker nodes.
+  - An Argo workflow for [model training]() using data from the object store on CHI@TACC and retraining on [production data]() are also included
+- All additional training code and references to training can be found within the [train]() folder.
 
 (2) Relevant Diagram Part
+
 - Within the system diagram the bulk of the model training and training platforms section of the project functions within the Development environment.
 - The data sourcing from our datasets, exploratory data analysis, model training, tracking with MLFlow, and scheduling using Ray cluster
-- Data will be stored within our persistent storage within Chameleon
+- Data is stored within our persistent storage within Chameleon
 - Using Docker containers to manage the different sections of the training pipeline
-- A retrainning trigger (schedule-based, etc..) will exist here as well to trigger model retraining
-- Model versions will be stored in model registry
+- A retrainning trigger (schedule-based, etc..) exists here as well to trigger model retraining
+- Model versions will be stored in model registry within MLFlow
 - Model will move to the Staging environment once all development steps have been completed
 
 (3) Justification
-- For our project, our end user would hypothetically use this on an edge device. As such it is important for our final model, or models, to be able to be deployed on such a device at all
-- As we will be testing multiple models, optimizations, etc.. It is important that we keep track of all of these model and code versions. As such the need for MLFlow to track our changes and store our data is imperative to our project
+
+- For our project, our end user would hypothetically use this on an edge device. As such it was important for our final model to be able to be deployed on such a device at all
+- As we tested multiple models and optimizations, etc.. It was important that we keep track of all of these model and code versions. As such the need for MLFlow to track our changes and store our data was imperative to our project
 - Also, the usage of a Ray cluster to manage our jobs is crucial for our continuous pipeline to work properly
 
 (4) Lecture Material Reference
+
 - Referring back to Units 4 and 5 in our lectures, we will be utilizing training with backpropagation in order to allow our models to learn the appropriate internal representations to better classify our data
-- Furthermore, as it was previously stated in lecture, paying explicit attention to our model’s size, velocity, and budget is a MUST. As they need to be able to perform on an edge device with a relatively small model size, with decent velocity, and small budget
+- Furthermore, as it was previously stated in lecture, paying explicit attention to our model’s size, velocity, and budget is a MUST. As they need to be able to perform on an edge device with a relatively small model size, with decent velocity, and small budget. Thankfully our model is an extremely small size and can be easily ran on an edge device.
 
 (5) Difficulty Points
-- Training strategies for large models
-  - We plan on testing a BERT model for training in order to see the effectiveness of an LLM on a classification task such as this. 
-  - To facilitate the training of an LLM we plan on experimenting with the following training strategies and report measurements to evaluate their effectiveness. These strategies are:
-    - Quantization
-    - LORA
-    - Pruning
-- These strategies are what we chose as each focuses on reducing model size and increasing model inference speed, two factors that are extremely important in our planned deployment to an edge device
-  - Scheduling hyperparameter tuning jobs
-  - Ray Tune will be used to perform hyperparameter optimization
-  - This will allow for easier hyperparameter tuning to occur with intelligent scheduling and allowing for faster testing of various configurations. Saving resources on our cluster
 
+- Scheduling hyperparameter tuning jobs
+  - We also attempted to run [Ray Tune]() to perform hyperparameter optimization for tuning our model during training with a referenced [Argo Workflow]() to trigger to model tuning and training. However, we had to use a special package for sklearn as sklearn models need special overhead to work within a Ray cluster.
 
 #### Model serving and monitoring platforms
 
@@ -253,3 +253,7 @@ optional "difficulty" points you are attempting. -->
 
 (4) Lecture Material Reference
 - The implementation of continuous X will reference the Lab 3 manual on DevOps for ML. The contents listed for this section is subject to change when the reference is released.
+
+
+
+
