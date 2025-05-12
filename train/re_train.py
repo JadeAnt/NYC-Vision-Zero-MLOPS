@@ -55,7 +55,7 @@ if __name__ == "__main__":
 
     # get latest model
     client = MlflowClient() 
-    latest_versions = client.get_latest_versions(name=MODEL_NAME, stages=["None", "Staging", "Production", "Archived"])
+    latest_versions = client.get_latest_versions(name=MODEL_NAME, stages=["development", "staging", "production", "canary"])
     if not latest_versions:
         raise ValueError(f"No versions of model '{MODEL_NAME}' found in registry.")
 
@@ -65,7 +65,7 @@ if __name__ == "__main__":
     latest_model = mlflow.sklearn.load_model(model_uri=f"models:/{MODEL_NAME}/{latest_model_version.version}")
 
     # Load data in parallel
-    files = ["production.csv"]
+    files = ["simulated_production.csv"]
     futures = [load_csv.remote(file) for file in files]
     dfs = ray.get(futures)
     df = pd.concat(dfs, ignore_index=True)
