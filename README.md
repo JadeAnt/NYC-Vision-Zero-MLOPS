@@ -249,26 +249,22 @@ optional "difficulty" points you are attempting. -->
 
 (1) Strategy
 - Infrastructure-as-code:
-  - All infrastructure provisioning and configuration will be defined and version-controlled in this GitHub repository.
-  - Will provide both declarative Terraform configurations and imperative python-chi scripts to provision infrastructure.
-  - Will choose an automation tool (Ansible, ArgoCD, Argo Workflows, Helm, or python-chi) for installation and configuration of necessary dependencies on provisioned resources. Will use same tool or another for post-deployment configuration management.
+  - Resources on the Chameleon cloud infrastructure are provisioned in a declarative process using [Terraform](https://github.com/JadeAnt/NYC-Vision-Zero-MLOPS/tree/main/tf/kvm). 
+  - [Ansible](https://github.com/JadeAnt/NYC-Vision-Zero-MLOPS/tree/main/ansible) is used to deploy and configure the 3-node Kubernetes cluster for this project, including setting up services such as Kubernetes dashboard, ArgoCD, and Argo Workflows. 
+  - All configuration files are stored in this Github repository for full version control and traceability.
 
 - Cloud-native:
-  - All infrastructure modifications will be made through Git commits and applied using Terraform or python-chi. No manual changes will be made to running resources.
-  - The application will be broken down into independent, containerized services that communicate via APIs. These services will be deployed and scaled separately using Kubernetes.
-  - All services, including the machine learning model, will be containerized using Docker and managed through Kubernetes. 
-  - The Dockerfile for containerization and Kubernetes deployment file is stored and version-controlled in GitHub. 
+  - All infrastructure changes are made by updating version-controlled configuration files (Terraform, Ansible, ArgoCD), avoiding manual alterations to live environments.
+  - The project utilizes independently managed service [platforms](https://github.com/JadeAnt/NYC-Vision-Zero-MLOPS/tree/main/k8s/platform/templates) within [Kubernetes](https://github.com/JadeAnt/NYC-Vision-Zero-MLOPS/tree/main/k8s), including Prometheus, Grafana, MinIO, MLFlow, Postgres, and Ray.
 
 - CI/CD and Continuous Training:
-  - Source code and ML training pipelines will be stored in Git.
-  - Each commit triggers automated testing using GitHub Actions.
-  - Once all tests pass, Docker will update the appropriate container.
+  - The project uses [Argo Workflows](https://github.com/JadeAnt/NYC-Vision-Zero-MLOPS/tree/main/workflows) to automate the entire ML lifecycle through various workflow templates. 
+  - Redeployment is achieved by executing the build-container-image.yaml template after the build-initial.yaml template.
 
 - Staged deployment
-  - Services are promoted from staging -> canary -> production based on automated evaluations. This ensures a consistent and controlled release process.
-  - Staging provides a safe environment for pre-production testing and the canary enables production testing with minimal risk.
-  - These environments will be separated using Kubernetes.
-  - Environment transitions will be defined in GitHub Actions.
+  - The deployment pipeline is structured into three environments: staging, canary, and production.
+  - After the initial model is trained, a build container image workflow is triggered before deploying to the staging environment.
+  - The promotion steps are automated and managed through the promote-model.yaml workflow template.
 
 (2) Relevant Diagram Part
 - The source control section, at the top of the sytem diagram, represents the downstream flow of the Github Actions. The ML system lifecycle and the tranisitons between deployment environments (development, staging, canary, amd production) are clearly defined in the configuration files.
