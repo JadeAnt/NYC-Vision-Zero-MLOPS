@@ -278,5 +278,24 @@ optional "difficulty" points you are attempting. -->
 - The implementation of continuous X will reference the Lab 3 manual on DevOps for ML. The contents listed for this section is subject to change when the reference is released.
 
 
+### How to Run on Chameleon
+
+To run our project on chameleon please perform the following steps:
+
+1. First setup an ssh key to connect to the following Chameleon Sites: KVM@TACC, CHI@EDGE, and CHI@TACC
+2. Utilizing the notebooks within our [notebooks](https://github.com/JadeAnt/NYC-Vision-Zero-MLOPS/tree/main/notebooks) folder run the cells within the notebooks folder in numerical order
+3. Running the first [notebook 0](https://github.com/JadeAnt/NYC-Vision-Zero-MLOPS/blob/main/notebooks/0_intro.ipynb) to connect to our environment on Chameleon
+4. Run [Notebook 1](https://github.com/JadeAnt/NYC-Vision-Zero-MLOPS/blob/main/notebooks/1_setup_env.ipynb) to setup our environment, cloning our github repo to allow us to setup environment variables and kubespray. In this step also create Application Credentials on the KVM@TACC, CHI@EDGE, and CHI@TACC sites
+5. Run [Notebook 2](https://github.com/JadeAnt/NYC-Vision-Zero-MLOPS/blob/main/notebooks/2_provision_tf.ipynb) to provision our terraform configuration as defined in our [tf](https://github.com/JadeAnt/NYC-Vision-Zero-MLOPS/tree/main/tf) folder, then bringing it up within chameleon. You can follow the steps within the notebook to bring up the infrastructure
+6. Run [Notebook 3](https://github.com/JadeAnt/NYC-Vision-Zero-MLOPS/blob/main/notebooks/3_practice_ansible.ipynb) to test using ansible to configure our systems for us
+7. Run [Notebook 4](https://github.com/JadeAnt/NYC-Vision-Zero-MLOPS/blob/main/notebooks/4_deploy_k8s.ipynb) to actually deploy our k8s structure using kubespray by first running our pre, k8s, and post confige playbooks to setup everything. After this we can access our Kubernetes Dashboard, ArgoCD, and Argo Workflows to manage our nodes and applications
+8. Run [Notebook 5](https://github.com/JadeAnt/NYC-Vision-Zero-MLOPS/blob/main/notebooks/5_configure_argocd.ipynb) to use argo CD add platforms for our services like MLflow and Minio, whilst also bring up our application for our staging, canary, and production appslicaitons.
+9. At this point our service and apps are up and running so you can test everything! Feel free to visit the Ray Dashboard (see how to below), Minio, MLFlow, Grafana, Prometheus, and the FastAPI endpoints for staging, canary, and production
+10. Finally run [Notebook 8](https://github.com/JadeAnt/NYC-Vision-Zero-MLOPS/blob/main/notebooks/8_delete.ipynb) to delete our infrastruture. ALWAYS run this when done working to free resources for other to use within ChameleonCloud.
 
 
+### Access Ray Dashboard
+To access Ray cluster dashboard to see training jobs
+
+- ssh -L ports_set_here -i ~/.ssh/ssh_key_here cc@floating_ip_here
+- kubectl port-forward svc/ray-head -n nyc-vision-zero-platform ports_set_here
