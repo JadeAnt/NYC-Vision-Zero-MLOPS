@@ -85,25 +85,52 @@ diagram, (3) justification for your strategy, (4) relate back to lecture materia
 <!-- Make sure to clarify how you will satisfy the Unit 4 and Unit 5 requirements, 
 and which optional "difficulty" points you are attempting. -->
 (1) Strategy
-- We began with exploratory data analysis to analyze our [Motor Vehicles Crashes dataset]() , clean it, and found the features we hypothesized would be the best to work with starting out
+
+- We began with exploratory data analysis to analyze our [Motor Vehicles Crashes dataset](https://data.cityofnewyork.us/Public-Safety/Motor-Vehicle-Collisions-Vehicles/bm4k-52h4/about_data) , clean it, and found the features we hypothesized would be the best to work with starting out
 - We decided on using the features of [’intersection_id’, ’accidents_6m’, ’accidents_1y’, ’accidents_5y’] as our model input
   - ’intersection_id’ = The combination of the on street and off street names of the intersection the crash occured
   - ’accidents_6m’ = The amount of accidents that occured in the last 6 months
   - ’accidents_1y’ = The amount of accidents that occured in the last 1 year
   - ’accidents_5y’ = The amount of accidents that occured in the last 5 years
 - We chose our target variable to be based on the amount of accidents in the next 6 months or 'future_accidents_6m', as this seemed like the best time window to allow our model to make an informed prediction using our historical data.
-- We trained, retrained, and tested various different machine learning models in order to find which performs the best for our multi-classification based problem and finally decided on a RandomForestClassifier Model called [crash_model.joblib]().
+- We trained, retrained, and tested various different machine learning models in order to find which performs the best for our multi-classification based problem and finally decided on a RandomForestClassifier Model called [crash_model.joblib](https://github.com/JadeAnt/NYC-Vision-Zero-MLOPS/blob/main/fastapi/crash_model.joblib), this is just an example of what the model looks like.
 - Due to the nature of the data we had to incorporate a TimeSeriesSplit, as all of our data is ordered historically. This was critically important as this prevented our model from using future data points, or data it wouldnt have access to at its prediction time.
 - To Track the experiments we performed with we used the MLFlow and Minio platforms
-  - For our experiment tracking we utilized [MLFlow]() and saved any model artifacts within [Minio]()
+  - For our experiment tracking we utilized [MLFlow](https://github.com/JadeAnt/NYC-Vision-Zero-MLOPS/blob/main/k8s/platform/templates/mlflow.yaml) and saved any model artifacts within [Minio](https://github.com/JadeAnt/NYC-Vision-Zero-MLOPS/blob/main/k8s/platform/templates/minio.yaml)
     - Ran within our kubernetes cluster as defined by our configuration files
     - Saving the details of each run such using checkpointing to record accuracy, precision, recall, and f1_scores
     - This was critical as, due to the threat of prediction by mode, our model was in danger of simply using the most predicted class and overfitting to that. Leading to deceptively high accuracies. As such, accuracy was not the most important metric for us to look at and instead we decided to look at precision, recall, and f1 scores to best determine how the model best measured the accuracy of predictions and finding relavant instances of that prediciton.
 - We scheduled training jobs using a Ray cluster for our continuous pipeline
-  - Our [Ray]() Cluster is used to submit training jobs using our [training]() and [retraining]() scripts
+  - Our [Ray](https://github.com/JadeAnt/NYC-Vision-Zero-MLOPS/blob/main/k8s/platform/templates/ray.yaml) Cluster is used to submit training jobs using our [training](https://github.com/JadeAnt/NYC-Vision-Zero-MLOPS/blob/main/train/opt_train.py) and [retraining](https://github.com/JadeAnt/NYC-Vision-Zero-MLOPS/blob/main/train/re_train.py) scripts
   - Using a head node to schedule/manage jobs, data, and serve a dashboard with 3 worker nodes.
-  - An Argo workflow for [model training]() using data from the object store on CHI@TACC and retraining on [production data]() are also included
-- All additional training code and references to training can be found within the [train]() folder.
+  - An Argo workflow for [model training](https://github.com/JadeAnt/NYC-Vision-Zero-MLOPS/blob/main/workflows/train-model.yaml) using data from the object store on CHI@TACC and retraining on [production data](https://github.com/JadeAnt/NYC-Vision-Zero-MLOPS/blob/main/workflows/retrain-model.yaml) are also included
+- All additional training code and references to training can be found within the [train](https://github.com/JadeAnt/NYC-Vision-Zero-MLOPS/tree/main/train) folder.
+
+(2) Relevant Diagram Part
+
+- Within the system diagram the bulk of the model training and training platforms section of the project functions within the Development environment.
+- The data sourcing from our datasets, exploratory data analysis, model training, tracking with MLFlow, and scheduling using Ray cluster
+- Data is stored within our persistent storage within Chameleon
+- Using Docker containers to manage the different sections of the training pipeline
+- A retrainning trigger (schedule-based, etc..) exists here as well to trigger model retraining
+- Model versions will be stored in model registry within MLFlow
+- Model will move to the Staging environment once all development steps have been completed
+
+(3) Justification
+
+- For our project, our end user would hypothetically use this on an edge device. As such it was important for our final model to be able to be deployed on such a device at all
+- As we tested multiple models and optimizations, etc.. It was important that we keep track of all of these model and code versions. As such the need for MLFlow to track our changes and store our data was imperative to our project
+- Also, the usage of a Ray cluster to manage our jobs is crucial for our continuous pipeline to work properly
+
+(4) Lecture Material Reference
+
+- Referring back to Units 4 and 5 in our lectures, we will be utilizing training with backpropagation in order to allow our models to learn the appropriate internal representations to better classify our data
+- Furthermore, as it was previously stated in lecture, paying explicit attention to our model’s size, velocity, and budget is a MUST. As they need to be able to perform on an edge device with a relatively small model size, with decent velocity, and small budget. Thankfully our model is an extremely small size and can be easily ran on an edge device.
+
+(5) Difficulty Points
+
+- Scheduling hyperparameter tuning jobs
+  - We also attempted to run [Ray Tune](https://github.com/JadeAnt/NYC-Vision-Zero-MLOPS/blob/main/train/train_tune.py) to perform hyperparameter optimization for tuning our model during training with a referenced [Argo Workflow](https://github.com/JadeAnt/NYC-Vision-Zero-MLOPS/blob/main/workflows/train-tune-model.yaml) to trigger to model tuning and training. However, we had to use a special package for sklearn as sklearn models need special overhead to work within a Ray cluster.
 
 (2) Relevant Diagram Part
 
