@@ -14,7 +14,7 @@ grafana:
 
 ray:
   externalIP: "0.0.0.0"
-  workerReplicas: 1
+  workerReplicas: 3
 
 airflow:
   externalIP: "0.0.0.0"
