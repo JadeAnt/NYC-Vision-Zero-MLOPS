@@ -70,3 +70,5 @@ def predict(data: IntersectionFeatures):
     combined_response = {**prediction_result, "directory_info": dir_listing}
     
     return combined_response
+
+
