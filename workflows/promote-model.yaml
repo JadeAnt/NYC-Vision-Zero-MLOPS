@@ -23,7 +23,7 @@ spec:
             - name: lease-hours
               value: "2"
               
-      - - name: start-fastapi-container           # development to production only
+      - - name: start-fastapi-container           # canary to production only
           when: "{{workflow.parameters.source-environment}} == canary && {{workflow.parameters.target-environment}} == production"
           template: start-fastapi-container
           arguments:
@@ -109,9 +109,26 @@ spec:
         fi
 
   - name: trigger-train-model
-#
-# Empty implementation 
-#
+    inputs:
+      parameters:
+      - name: model-version
+      - name: environment
+    resource:
+      action: create
+      manifest: |
+        apiVersion: argoproj.io/v1alpha1
+        kind: Workflow
+        metadata:
+          generateName: retrain-model-
+        spec:
+          workflowTemplateRef:
+            name: retrain-model
+          arguments:
+            parameters:
+            - name: environment
+              value: "{{inputs.parameters.environment}}"
+            - name: model-version
+              value: "{{inputs.parameters.model-version}}"    
 
   - name: skopeo-retag
     inputs:
