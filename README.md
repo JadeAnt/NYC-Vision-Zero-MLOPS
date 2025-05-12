@@ -207,6 +207,11 @@ optional "difficulty" points you are attempting. -->
   - To simulate a production environment, we use a script named ⁠ simulate_online_data.py ⁠. This script processes data from the [Vehicle Classification Counts (2011-2024) dataset](https://data.cityofnewyork.us/Transportation/Vehicle-Classification-Counts-2011-2024-/96ay-ea4r/about_data).
   - This dataset was chosen because it reflects the continuous stream of real-world, traffic-related information that our production system would typically handle. It includes details on vehicle types and their counts at different locations and times, which is valuable for testing the online data ingestion, processing, and model inference capabilities of our system under realistic conditions. This allows us to evaluate how the model performs with live-like data influx.
 
+•⁠  ⁠Automated Data Fetching:
+  - To ensure our model is trained on the most recent data, we've implemented an automated data fetching mechanism.
+  - A [shell script (`schedule_data_fetch.sh`)](./data/schedule_data_fetch.sh) sets up a cron job that runs every 7 days.
+  - This cron job executes a [Python script (`fetch_new_data.py`)](./data/fetch_new_data.py) which fetches data from the NYC OpenData API for the preceding 7 days.
+  - The fetched data is then processed, saved as a CSV file, and uploaded to our object storage in the `production` bucket for retraining purposes. This ensures a continuous flow of new data into our MLOps pipeline.
 
 (2) Relevant Diagram Part
 •⁠  ⁠The data pipeline in the system diagram is in the development phase and it begins with the collection of raw data from various sources. This data undergoes exploratory data analysis (EDA) to identify patterns and issues, followed by cleaning, preprocessing, and transformation for model readiness. 
