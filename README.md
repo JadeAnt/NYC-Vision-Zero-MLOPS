@@ -170,51 +170,56 @@ This section directly aligns with Units 6 and 7. Unit 6 emphasized serving model
 optional "difficulty" points you are attempting. -->
 
 (1) Strategy
-- Persistent Storage:  
+•⁠  ⁠Persistent Storage:  
   Provision persistent block storage on Chameleon to store all critical artifacts, including historical datasets and streaming data.
-- Offline Data Pipeline:  
+  - Implementation: Our [block storage provisioning script](./etl_pipeline/provision_block_storage.ipynb) creates a server with persistent storage where critical artifacts are stored
+  - Kubernetes Integration: Block storage is mounted in our Kubernetes cluster for various components:
+    - [MinIO object storage](/k8s/platform/templates/minio.yaml): Uses ⁠ /mnt/block/minio_data ⁠ for model artifacts, datasets, and experiment results
+    - [Prometheus metrics](/k8s/platform/templates/prometheus.yaml): Uses ⁠ /mnt/block/prometheus-data ⁠ for long-term monitoring data
+    - [Grafana dashboards](/k8s/platform/templates/grafana.yaml): Uses ⁠ /mnt/block/grafana_data ⁠ for persistent visualization configurations
+    - [MLflow tracking](/k8s/platform/templates/mlflow.yaml): Uses MinIO for artifact storage with PostgreSQL backend for metadata
+  - This persistent storage architecture ensures data durability across container restarts and node failures, with all critical artifacts preserved
+•⁠  ⁠Offline Data Pipeline:  
   - Data Sources:  
-    - OpenWeatherMap (weather data)  
-    - NYC Motor Vehicle Collisions Vehicles  
-    - Citywide Traffic Statistics  
+    - NYC Motor Vehicle Collisions - Crashes (sourced via NYC OpenData API)
   - Process:  
-    - Extraction: Schedule regular ETL jobs (using Apache Airflow) to pull updated datasets.
-    - Transformation: Clean data by handling missing values, normalizing fields, and performing feature extraction.
-    - Loading: Store the transformed data in persistent storage.
-- Online Data Pipeline:  
-  - Data Source:  
-    - Edge Device (Raspberry Pi) providing real-time GPS location data.
-  - Process:  
-    - Data Simulation & Ingestion: Use a lightweight script (via REST API or MQTT) to simulate real-time GPS streaming.
-    - Real-Time Processing: Ingest data into a streaming pipeline, applying minimal cleaning (e.g., timestamp validation, coordinate formatting).
-    - Storage & Usage:  
-      - Store the online data temporarily for immediate use by the Inference API.
-      - Log the data in persistent storage for later model re-training and evaluation.
+    - Extraction: A Docker Compose service (⁠ extract-data ⁠) downloads the latest NYC Motor Vehicle Collisions dataset directly from the NYC OpenData API.
+    - Transformation: A subsequent Docker Compose service (⁠ transform-data ⁠) executes a Python script using ⁠ pandas ⁠ for data cleaning, feature engineering (including temporal features and a unique intersection ID), and preparation of the data for model training. This includes handling missing values, date conversions, and grouping by intersection.
+    - Loading: The final Docker Compose service (⁠ load-data ⁠) uses ⁠ rclone ⁠ to upload the processed, year-partitioned data to a configured cloud storage solution.
+  - Implementation Details based on [ETL pipeline](./etl_pipeline/docker-compose-etl.yaml):
+    - *Extract*: The ⁠ extract-data ⁠ service uses ⁠ wget ⁠ to download the raw CSV data (⁠ collisions.csv ⁠) from the NYC OpenData API endpoint (⁠ https://data.cityofnewyork.us/api/views/h9gi-nx95/rows.csv?accessType=DOWNLOAD ⁠) into a shared Docker volume.
+    - *Transform*: The ⁠ transform-data ⁠ service runs a Python script leveraging ⁠ pandas ⁠ and ⁠ numpy ⁠. Key operations include:
+      - Dropping records with missing 'ON STREET NAME' or 'CROSS STREET NAME'.
+      - Creating a unique ⁠ intersection_id ⁠ by hashing the combination of 'ON STREET NAME' and 'CROSS STREET NAME'.
+      - Converting 'CRASH DATE' to datetime objects and removing entries with invalid dates.
+      - Grouping crash events by ⁠ intersection_id ⁠ and sorting them chronologically.
+      - Generating features by iterating through yearly prediction time points. For each point, it calculates:
+        - Counts of accidents in the past 6 months, 1 year, and 5 years.
+        - The target variable: ⁠ future_accidents_6m ⁠ (count of accidents in the next 6 months). Rows where ⁠ future_accidents_6m ⁠ is zero are excluded.
+      - Employing ⁠ concurrent.futures.ProcessPoolExecutor ⁠ to parallelize the processing of intersection data.
+      - Saving the transformed data into separate CSV files for each year (e.g., ⁠ year_YYYY/processed_YYYY.csv ⁠).
+      - Deleting the original downloaded ⁠ collisions.csv ⁠ after processing.
+    - *Load*: The ⁠ load-data ⁠ service utilizes ⁠ rclone ⁠ to transfer the processed yearly CSV files from the shared Docker volume to a specified remote cloud storage location (e.g., ⁠ chi_tacc:${RCLONE_CONTAINER} ⁠). It ensures the remote target is cleaned before the new data upload.
+  - Data Leakage Prevention: Our [ETL pipeline](./etl_pipeline/docker-compose-etl.yaml) carefully prevents data leakage through temporal separation within the ⁠ transform-data ⁠ stage. Features (e.g., ⁠ accidents_6m ⁠, ⁠ accidents_1y ⁠, ⁠ accidents_5y ⁠) are calculated based on historical data before each ⁠ prediction_time ⁠. The target variable (⁠ future_accidents_6m ⁠) is determined using data after the ⁠ prediction_time ⁠. This strict time-based separation ensures that no future information contaminates the features used for model training.
+•⁠  ⁠Online Data Pipeline:  
+  - To simulate a production environment, we use a script named ⁠ simulate_online_data.py ⁠. This script processes data from the [Vehicle Classification Counts (2011-2024) dataset](https://data.cityofnewyork.us/Transportation/Vehicle-Classification-Counts-2011-2024-/96ay-ea4r/about_data).
+  - This dataset was chosen because it reflects the continuous stream of real-world, traffic-related information that our production system would typically handle. It includes details on vehicle types and their counts at different locations and times, which is valuable for testing the online data ingestion, processing, and model inference capabilities of our system under realistic conditions. This allows us to evaluate how the model performs with live-like data influx.
+
 
 (2) Relevant Diagram Part
-- The data pipeline in the system diagram is in the development phase and it begins with the collection of raw data from various sources. This data undergoes exploratory data analysis (EDA) to identify patterns and issues, followed by cleaning, preprocessing, and transformation for model readiness. 
-
-- There is also a streaming pipeline in the system diagram which is used to handle real time data prediction. In the architecture, it’s integrated with online serving to handle dynamic, real-time data inputs and outputs.
+•⁠  ⁠The data pipeline in the system diagram is in the development phase and it begins with the collection of raw data from various sources. This data undergoes exploratory data analysis (EDA) to identify patterns and issues, followed by cleaning, preprocessing, and transformation for model readiness. 
 
 
 (3) Justification
-- Offline Pipeline:  
+•⁠  ⁠Offline Pipeline:  
   Automates ingestion and ensures high-quality historical data for robust model training.
-- Online Pipeline:  
+•⁠  ⁠Online Pipeline:  
   Simulates production conditions with real-time data ingestion, enabling immediate inference and continuous learning.
-- Persistent Storage:  
+•⁠  ⁠Persistent Storage:  
   Decouples compute from data, ensuring reliability and ease of maintenance during scaling or system updates.
 
 (4) Lecture Material Reference
-- The implementation of data pipeline will reference the Lab 8 manual on Data pipeline. The contents listed for this section is subject to change when the reference is released.
-
-
-(5) Difficulty Points 
-- Data Dashboard:  
-  Implement an interactive dashboard to visualize:
-    - Real-time data ingestion rates.
-    - Data quality metrics.
-    - ETL job performance.
+•⁠  ⁠The implementation of data pipeline references Lab 8 manual on Data pipeline. 
 
 #### Continuous X
 
