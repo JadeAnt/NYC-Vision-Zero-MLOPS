@@ -135,32 +135,6 @@ and which optional "difficulty" points you are attempting. -->
 - Scheduling hyperparameter tuning jobs
   - We also attempted to run [Ray Tune](https://github.com/JadeAnt/NYC-Vision-Zero-MLOPS/blob/main/train/train_tune.py) to perform hyperparameter optimization for tuning our model during training with a referenced [Argo Workflow](https://github.com/JadeAnt/NYC-Vision-Zero-MLOPS/blob/main/workflows/train-tune-model.yaml) to trigger to model tuning and training. However, we had to use a special package for sklearn as sklearn models need special overhead to work within a Ray cluster.
 
-(2) Relevant Diagram Part
-
-- Within the system diagram the bulk of the model training and training platforms section of the project functions within the Development environment.
-- The data sourcing from our datasets, exploratory data analysis, model training, tracking with MLFlow, and scheduling using Ray cluster
-- Data is stored within our persistent storage within Chameleon
-- Using Docker containers to manage the different sections of the training pipeline
-- A retrainning trigger (schedule-based, etc..) exists here as well to trigger model retraining
-- Model versions will be stored in model registry within MLFlow
-- Model will move to the Staging environment once all development steps have been completed
-
-(3) Justification
-
-- For our project, our end user would hypothetically use this on an edge device. As such it was important for our final model to be able to be deployed on such a device at all
-- As we tested multiple models and optimizations, etc.. It was important that we keep track of all of these model and code versions. As such the need for MLFlow to track our changes and store our data was imperative to our project
-- Also, the usage of a Ray cluster to manage our jobs is crucial for our continuous pipeline to work properly
-
-(4) Lecture Material Reference
-
-- Referring back to Units 4 and 5 in our lectures, we will be utilizing training with backpropagation in order to allow our models to learn the appropriate internal representations to better classify our data
-- Furthermore, as it was previously stated in lecture, paying explicit attention to our model’s size, velocity, and budget is a MUST. As they need to be able to perform on an edge device with a relatively small model size, with decent velocity, and small budget. Thankfully our model is an extremely small size and can be easily ran on an edge device.
-
-(5) Difficulty Points
-
-- Scheduling hyperparameter tuning jobs
-  - We also attempted to run [Ray Tune]() to perform hyperparameter optimization for tuning our model during training with a referenced [Argo Workflow]() to trigger to model tuning and training. However, we had to use a special package for sklearn as sklearn models need special overhead to work within a Ray cluster.
-
 #### Model serving and monitoring platforms
 
 (1) Strategy:
