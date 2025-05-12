@@ -44,6 +44,9 @@ Must include: all the hardware, all the containers/software platforms, all the m
 all the data. -->
 ![System diagram here](./System_diagram.PNG)
 
+### Detailed System diagram
+![Detailed System diagram here](./detailed_sys_diagram.PNG)
+
 ### Summary of outside materials
 
 <!-- In a table, a row for each dataset, foundation model. 
