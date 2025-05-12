@@ -244,7 +244,7 @@ optional "difficulty" points you are attempting. -->
 - Staged deployment
   - The deployment pipeline is structured into three environments: staging, canary, and production.
   - After the initial model is trained, a build container image workflow is triggered before deploying to the staging environment.
-  - The promotion steps are automated and managed through the promote-model.yaml workflow template.
+  - The promotion steps are automated and managed through the [promote-model.yaml](https://github.com/JadeAnt/NYC-Vision-Zero-MLOPS/blob/main/workflows/promote-model.yaml) workflow template.
 
 (2) Relevant Diagram Part
 - The transfer of a model from the development environment, to the staging, canary, and then production is defined by the templates from Argo Workflows. Retraining is triggered when a model fails the offline evaluation, stopping its current promotion to the next environment until this is resolved. When transitioning from the canary to the production environment, a bare metal instance is reserved and deployed on the Chi@Edge cloud.
