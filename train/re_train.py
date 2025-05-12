@@ -25,7 +25,7 @@ def load_csv(file):
 
 def preprocess(df):
     df = df.dropna()
-    df["intersection_id"] = df["intersection_id"].astype("category").cat.codes
+    #df["intersection_id"] = df["intersection_id"].astype("category").cat.codes
     #df["accidents_6m"] = df["accidents_6m"].astype(int)
     #df["accidents_1y"] = df["accidents_1y"].astype(int)
     #df["accidents_5y"] = df["accidents_5y"].astype(int)
