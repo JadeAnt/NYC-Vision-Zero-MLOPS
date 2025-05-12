@@ -270,7 +270,7 @@ optional "difficulty" points you are attempting. -->
   - The promotion steps are automated and managed through the promote-model.yaml workflow template.
 
 (2) Relevant Diagram Part
-- The source control section, at the top of the sytem diagram, represents the downstream flow of the Github Actions. The ML system lifecycle and the tranisitons between deployment environments (development, staging, canary, amd production) are clearly defined in the configuration files.
+- The transfer of a model from the development environment, to the staging, canary, and then production is defined by the templates from Argo Workflows. Retraining is triggered when a model fails the offline evaluation, stopping its current promotion to the next environment until this is resolved. When transitioning from the canary to the production environment, a bare metal instance is reserved and deployed on the Chi@Edge cloud.
 
 (3) Justification
 - Using Git for version control of infrastructure enables reproducibility, auditability, and collaboration.
@@ -278,7 +278,7 @@ optional "difficulty" points you are attempting. -->
 - Direct execution on VMs will be avoided, ensuring portability and scalability.
 
 (4) Lecture Material Reference
-- The implementation of continuous X will reference the Lab 3 manual on DevOps for ML. The contents listed for this section is subject to change when the reference is released.
+- The implementation of continuous X references the Lab 3 manual on DevOps for ML.
 
 
 ### How to Run on Chameleon
