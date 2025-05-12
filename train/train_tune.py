@@ -39,7 +39,6 @@ def load_data():
     for file in files:
         try:
             df = pd.read_csv(file, parse_dates=True)
-            #df["__year"] = year  # For debugging or tracking
             dfs.append(df)
         except Exception as e:
             print(f"[ERROR] Failed to read {file}: {e}")
@@ -90,7 +89,7 @@ def main():
 
     #register_ray()
 
-    mlflow.set_tracking_uri("http://10.56.2.49:8000")  # Update as needed
+    mlflow.set_tracking_uri("http://10.56.2.49:8000") 
     df = load_data()
     X, y = preprocess(df)
 
